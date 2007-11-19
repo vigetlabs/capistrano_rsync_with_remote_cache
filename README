@@ -8,4 +8,10 @@ To use this plugin, add the following line to your Capfile if it is not already 
 
 (This line will already be present if you capified your application using Capistrano 2.1.0 or later.)
 
+This plugin requires that the following plugins be installed:
+
+* capistrano
+* capistrano-ext
+* tinder
+
 Copyright (c) 2007 Mark Cornick, released under the MIT license
