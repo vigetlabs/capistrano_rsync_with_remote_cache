@@ -1,0 +1,11 @@
+= VlDeployment
+
+This is a repackaging of VLCapistrano and related gems into Rails plugin form.
+
+To use this plugin, add the following line to your Capfile if it is not already present:
+
+  Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
+
+(This line will already be present if you capified your application using Capistrano 2.1.0 or later.)
+
+Copyright (c) 2007 Mark Cornick, released under the MIT license
