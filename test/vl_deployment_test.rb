@@ -1,6 +1,6 @@
 require 'test/unit'
 
-class VlDeploymentTest < Test::Unit::TestCase
+class VigetDeploymentTest < Test::Unit::TestCase
   # Replace this with your real tests.
   def test_this_plugin
     flunk

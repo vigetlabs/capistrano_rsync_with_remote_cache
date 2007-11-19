@@ -7,12 +7,12 @@ require 'capistrano/ext/multistage'
 
 namespace :deploy do
 
-  before "deploy", "vl:lockout:check"
-  before "deploy:migrations", "vl:lockout:check"
-  before "deploy:update_code", "vl:db:dump"
-  after "deploy:update_code", "vl:deploy:post_update_code"
-  after "deploy", "vl:deploy:campfire"
-  after "deploy:migrations", "vl:deploy:campfire"
+  before "deploy", "viget:lockout:check"
+  before "deploy:migrations", "viget:lockout:check"
+  before "deploy:update_code", "viget:db:dump"
+  after "deploy:update_code", "viget:deploy:post_update_code"
+  after "deploy", "viget:deploy:campfire"
+  after "deploy:migrations", "viget:deploy:campfire"
 
   desc 'Start the application servers.'
   task :start, :roles => :app do
@@ -56,7 +56,7 @@ namespace :deploy do
   end
 end
 
-namespace :vl do
+namespace :viget do
   namespace :lockout do
     desc 'Lock out deployment. Specify reason with REASON=xyz'
     task :add, :roles => :app do
