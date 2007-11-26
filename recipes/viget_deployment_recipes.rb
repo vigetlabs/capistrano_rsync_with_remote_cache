@@ -5,6 +5,10 @@ require 'uri'
 require 'tinder'
 require 'capistrano/ext/multistage'
 
+depend :local, :gem, 'capistrano', '>=2.0.0'
+depend :local, :gem, 'capistrano-ext', '>=1.2.0'
+depend :local, :gem, 'tinder', '>=0.1.4'
+
 namespace :deploy do
 
   before "deploy", "viget:lockout:check"
