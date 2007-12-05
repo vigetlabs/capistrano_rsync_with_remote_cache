@@ -18,6 +18,8 @@ namespace :deploy do
   after "deploy", "viget:deploy:campfire"
   after "deploy:migrations", "viget:deploy:campfire"
 
+  after "multistage:ensure", "viget:config:environment"
+
   desc 'Start the application servers.'
   task :start, :roles => :app do
     unless fetch(:timezone,nil).nil?
@@ -157,6 +159,12 @@ namespace :viget do
           end
         end
       end
+    end
+  end
+  
+  namespace :config do
+    task :environment do
+      set :rails_env, fetch(:stage).to_s
     end
   end
 end
