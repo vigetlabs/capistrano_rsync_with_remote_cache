@@ -163,6 +163,7 @@ namespace :viget do
   end
   
   namespace :config do
+    desc '[internal] Sets the rails_env configuration variable to match the selected stage.'
     task :environment do
       set :rails_env, fetch(:stage).to_s
     end
