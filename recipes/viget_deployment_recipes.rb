@@ -121,7 +121,7 @@ namespace :viget do
 
   namespace :deploy do
     desc '[internal] Creates Viget-specific config files and any symlinks specified in the configuration.'
-    task :post_update_code, :roles => :app do
+    task :post_update_code do
       run "cp #{release_path}/config/database.yml-sample #{release_path}/config/database.yml"
       run "cp #{release_path}/config/mongrel_cluster.yml-#{stage} #{release_path}/config/mongrel_cluster.yml"
       unless fetch(:symlinks,nil).nil?
