@@ -13,7 +13,7 @@ namespace :deploy do
 
   before "deploy", "viget:lockout:check"
   before "deploy:migrations", "viget:lockout:check"
-  before "deploy:update_code", "viget:db:dump"
+  # before "deploy:update_code", "viget:db:dump"
   after "deploy:update_code", "viget:deploy:post_update_code"
   after "deploy", "viget:deploy:campfire"
   after "deploy:migrations", "viget:deploy:campfire"
