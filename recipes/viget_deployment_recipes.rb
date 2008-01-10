@@ -96,16 +96,6 @@ namespace :viget do
     desc 'Query the latest version of the database'
     task :version, :roles => :db, :only => { :primary => true } do
       rake = fetch(:rake, "rake")
-      # rails_env = fetch(:rails_env, "production")
-      # migrate_env = fetch(:migrate_env, "")
-      # migrate_target = fetch(:migrate_target, :latest)
-      # 
-      # directory = case migrate_target.to_sym
-      #   when :current then current_path
-      #   when :latest  then current_release
-      #   else raise ArgumentError, "unknown migration target #{migrate_target.inspect}"
-      #   end
-
       run "cd #{current_release}; #{rake} RAILS_ENV=#{rails_env} db:version"
     end
     
