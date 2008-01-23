@@ -1,3 +1,6 @@
+# make sure we can find rsync_with_remote_cache
+$: << File.expand_path("vendor/plugins/viget_deployment/lib")
+
 require 'rubygems'
 require 'yaml'
 require 'erb'
