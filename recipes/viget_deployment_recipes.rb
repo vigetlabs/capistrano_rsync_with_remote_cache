@@ -20,6 +20,7 @@ namespace :deploy do
   after "deploy:update_code", "viget:deploy:post_update_code"
   after "deploy", "viget:deploy:campfire"
   after "deploy:migrations", "viget:deploy:campfire"
+  after "deploy:rollback", "viget:deploy:campfire"
 
   after "multistage:ensure", "viget:config:environment"
 
