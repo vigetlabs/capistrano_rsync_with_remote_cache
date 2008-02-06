@@ -67,10 +67,8 @@ module Capistrano
         # not a checkout at all), we remove the directory and recreate it with a fresh SCM checkout.
         # If the directory doesn't exist, we create it with a fresh SCM checkout.
         # TODO: punt in some sensible way if local_cache exists but is a regular file.
-        # TODO: `svn info` restricts this to svn only, which is not a problem for us at Viget, but
-        # may be a problem elsewhere. Try to find a less svn-specific way of doing this.
         def command
-          if (File.exists?(local_cache) && File.directory?(local_cache))
+          if (configuration[:scm] != :subversion || File.exists?(local_cache) && File.directory?(local_cache))
             unless (`svn info #{local_cache} | sed -n 's/URL: //p'`.strip != configuration[:repository])
               logger.trace "updating local cache to revision #{revision}"
               cmd = source.sync(revision, local_cache)
