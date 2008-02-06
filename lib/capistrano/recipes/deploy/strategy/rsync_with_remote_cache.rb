@@ -66,6 +66,10 @@ module Capistrano
         # If it matches, we update it. If it doesn't match (either it's for another repository or
         # not a checkout at all), we remove the directory and recreate it with a fresh SCM checkout.
         # If the directory doesn't exist, we create it with a fresh SCM checkout.
+        #
+        # FIXME: The above logic only takes place if the SCM is Subversion. At some point, similar logic
+        # will probably be necessary for Git and other SCMs we might use.
+        #
         # TODO: punt in some sensible way if local_cache exists but is a regular file.
         def command
           if (configuration[:scm] != :subversion || File.exists?(local_cache) && File.directory?(local_cache))
