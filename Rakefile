@@ -1,22 +1,22 @@
-require 'rake'
-require 'rake/testtask'
-require 'rake/rdoctask'
+require 'rubygems'
+Gem::manage_gems
+require 'rake/gempackagetask'
 
-desc 'Default: run unit tests.'
-task :default => :test
-
-desc 'Test the viget_deployment plugin.'
-Rake::TestTask.new(:test) do |t|
-  t.libs << 'lib'
-  t.pattern = 'test/**/*_test.rb'
-  t.verbose = true
+spec = Gem::Specification.new do |s|
+  s.name = 'capistrano_rsync_with_remote_cache'
+  s.version = '2.2'
+  s.author = 'Mark Cornick'
+  s.email = 'mark@viget.com'
+  s.homepage = 'http://trac.extendviget.com/lab/wiki/CapistranoRsyncWithRemoteCache'
+  s.platform = Gem::Platform::RUBY
+  s.summary = 'A deployment strategy for Capistrano 2.0 which combines rsync with a remote cache, allowing fast deployments from SCM servers behind firewalls.'
+  s.files = ['lib/capistrano/recipes/deploy/strategy/rsync_with_remote_cache.rb']
+  s.require_path = 'lib'
+  s.has_rdoc = true
+  s.extra_rdoc_files = ['README']
+  s.add_dependency("capistrano", ">= 2.0")
 end
 
-desc 'Generate documentation for the viget_deployment plugin.'
-Rake::RDocTask.new(:rdoc) do |rdoc|
-  rdoc.rdoc_dir = 'rdoc'
-  rdoc.title    = 'VigetDeployment'
-  rdoc.options << '--line-numbers' << '--inline-source'
-  rdoc.rdoc_files.include('README')
-  rdoc.rdoc_files.include('lib/**/*.rb')
+Rake::GemPackageTask.new(spec) do |p|
+  p.need_tar = false
 end
