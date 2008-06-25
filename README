@@ -1,24 +1,8 @@
-= VigetDeployment
+= Capistrano rsync_with_remote_cache
 
-This is a repackaging of VLCapistrano and related gems into Rails plugin form.
+This gem provides a deployment strategy for Capistrano which combines rsync with a remote cache, allowing fast deployments from Subversion repositories behind firewalls.
 
-To use this plugin, add the following line to your Capfile if it is not already present:
-
-  Dir['vendor/plugins/*/recipes/*.rb'].each { |plugin| load(plugin) }
-
-(This line will already be present if you capified your application using Capistrano 2.1.0 or later.)
-
-This plugin requires that the following plugins be installed:
-
-* capistrano
-* capistrano-ext
-* tinder
-
-== Capistrano rsync_with_remote_cache
-
-The remainder of this file documents the capistrano_rsync_with_remote_cache gem, which can be built using the included Rakefile and used independently of the viget_deployment plugin. This gem provides a deployment strategy for Capistrano which combines rsync with a remote cache, allowing fast deployments from Subversion repositories behind firewalls.
-
-=== Requirements
+== Requirements
 
 This gem requires Capistrano 2.0.0 and higher. Git support requires Capistrano 2.1.0 or higher.
 
@@ -28,15 +12,15 @@ This gem requires and <tt>rsync</tt> command line utilities on the local and rem
 
 This gem is tested primarily on Mac OS X and Linux. It may work with a Windows local host, but is not tested or supported. Like Capistrano itself, it will not work with a Windows remote host.
 
-=== Gem preliminaries
+== Gem preliminaries
 
-To create the gem, run <tt>rake package</tt> in this directory, which will dump the gem in the pkg subdirectory.
+To create the gem, run <tt>gem build capistrano_rsync_with_remote_cache.gemspec</tt> in this directory.
 
 To use this deployment strategy, add this line to your configuration:
 
 <tt>set :deploy_via, :rsync_with_remote_cache</tt>
 
-=== How it works
+== How it works
 
 This strategy maintains two cache directories:
 
@@ -49,4 +33,4 @@ Second, rsync runs on the local side to sync the remote cache to the local cache
 
 Finally, a copy of the remote cache is made in the appropriate release directory. The end result is the same as if the code had been checked out directly on the remote server, as in the default strategy.
 
-Copyright (c) 2007, 2008 Mark Cornick, released under the MIT license
+Copyright (c) 2007, 2008 Mark Cornick of Viget Labs, released under the MIT license
