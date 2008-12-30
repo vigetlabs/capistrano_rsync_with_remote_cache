@@ -1,6 +1,6 @@
 spec = Gem::Specification.new do |s|
   s.name = 'capistrano_rsync_with_remote_cache'
-  s.version = '2.2'
+  s.version = '2.3'
   s.author = 'Mark Cornick'
   s.email = 'mark@viget.com'
   s.homepage = 'http://github.com/vigetlabs/capistrano_rsync_with_remote_cache'

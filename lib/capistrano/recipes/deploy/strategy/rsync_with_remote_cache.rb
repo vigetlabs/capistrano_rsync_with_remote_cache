@@ -14,7 +14,7 @@ module Capistrano
 
           # Step 2: Update the remote cache.
           logger.trace "copying local cache to remote"
-          find_servers(:roles => :app, :except => { :no_release => true }).each do |server|
+          find_servers(:except => { :no_release => true }).each do |server|
             system("rsync #{rsync_options} #{local_cache}/ #{rsync_host(server)}:#{repository_cache}/")
           end
 
