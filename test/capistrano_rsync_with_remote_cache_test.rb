@@ -4,16 +4,6 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
   context 'RsyncWithRemoteCache' do
     setup do
       @rwrc = Capistrano::Deploy::Strategy::RsyncWithRemoteCache.new
-      # @configuration = {
-      #   :local_cache => '',
-      #   :release_path => '',
-      #   :repository => '',
-      #   :repository_cache => '',
-      #   :rsync_options => '',
-      #   :scm => '',
-      #   :user => ''
-      # }
-      # @rwrc.expects(:configuration).at_least_once.returns(@configuration)
 
       logger_stub = stub()
       logger_stub.stubs(:trace)
@@ -43,11 +33,14 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     end
 
     should 'check!' do
-      # super.check do |d|
-      #   d.local.command(source.command)
-      #   d.local.command('rsync')
-      #   d.remote.command('rsync')
-      # end
+      @configuration = {:releases_path => 'releases_path', :deploy_to => 'deploy_to'}
+      @configuration.stubs(:invoke_command)
+      @rwrc.expects(:configuration).at_least_once.returns(@configuration)
+      
+      source_stub = stub(:command => 'command')
+      @rwrc.stubs(:source).returns(source_stub)
+      
+      @rwrc.check!
     end
 
     context 'repository_cache' do
