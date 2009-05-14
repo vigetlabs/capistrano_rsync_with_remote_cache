@@ -1,6 +1,14 @@
+# This test suite was written way after the code, back when the author didn't do TDD consistently.
+# Also, the code does a lot of things with external servers and services, so there's a lot of mocking.
+# Therefore, this suite is nearly impossible to follow in places. Sorry.
+
 require 'test_helper'
 
 class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
+  def stub_configuration(hash)
+    @rwrc.expects(:configuration).at_least_once.returns(hash)
+  end
+
   context 'RsyncWithRemoteCache' do
     setup do
       @rwrc = Capistrano::Deploy::Strategy::RsyncWithRemoteCache.new
@@ -18,8 +26,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     end
 
     should 'deploy!' do
-      @configuration = {:deploy_to => 'deploy_to', :release_path => 'release_path', :scm => :subversion}
-      @rwrc.expects(:configuration).at_least_once.returns(@configuration)
+      stub_configuration(:deploy_to => 'deploy_to', :release_path => 'release_path', :scm => :subversion)
       @rwrc.stubs(:shared_path).returns('shared')
 
       # Step 1: Update the local cache.
@@ -33,7 +40,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       server_stub = stub(:host => 'host')
       @rwrc.expects(:system).with("rsync -az --delete .rsync_cache/ host:shared/cached-copy/")
       @rwrc.expects(:find_servers).returns([server_stub])
-      
+
       # Step 3: Copy the remote cache into place.
       @rwrc.expects(:mark).returns('mark')
       @rwrc.expects(:run).with("rsync -a --delete shared/cached-copy/ release_path/ && mark")
@@ -42,13 +49,13 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     end
 
     should 'check!' do
-      @configuration = {:releases_path => 'releases_path', :deploy_to => 'deploy_to'}
-      @configuration.stubs(:invoke_command)
-      @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-      
+      configuration = {:releases_path => 'releases_path', :deploy_to => 'deploy_to'}
+      configuration.stubs(:invoke_command)
+      @rwrc.expects(:configuration).at_least_once.returns(configuration)
+
       source_stub = stub(:command => 'command')
       @rwrc.stubs(:source).returns(source_stub)
-      
+
       @rwrc.check!
     end
 
@@ -58,48 +65,36 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       end
 
       should 'return specified cache if present in configuration' do
-        @configuration = {:repository_cache => 'cache'}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:repository_cache => 'cache')
         assert_equal 'shared/cache', @rwrc.send(:repository_cache)
       end
 
       should 'return default cache if not present in configuration' do
-        @configuration = {:repository_cache => nil}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:repository_cache => nil)
         assert_equal 'shared/cached-copy', @rwrc.send(:repository_cache)
       end
     end
 
     context 'local_cache' do
       should 'return specified cache if present in configuration' do
-        @configuration = {:local_cache => 'cache'}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:local_cache => 'cache')
         assert_equal 'cache', @rwrc.send(:local_cache)
       end
 
       should 'return default cache if not present in configuration' do
-        @configuration = {:local_cache => nil}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:local_cache => nil)
         assert_equal '.rsync_cache', @rwrc.send(:local_cache)
       end
     end
 
     context 'rsync_options' do
       should 'return specified options if present in configuration' do
-        @configuration = {:rsync_options => 'options'}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:rsync_options => 'options')
         assert_equal 'options', @rwrc.send(:rsync_options)
       end
 
       should 'return default options if not present in configuration' do
-        @configuration = {:rsync_options => nil}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:rsync_options => nil)
         assert_equal '-az --delete', @rwrc.send(:rsync_options)
       end
     end
@@ -110,27 +105,22 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       end
 
       should 'prefix user if present in configuration' do
-        @configuration = {:user => 'user'}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:user => 'user')
         assert_equal 'user@host', @rwrc.send(:rsync_host, @server_stub)
       end
 
       should 'not prefix user if not present in configuration' do
-        @configuration = {:user => nil}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
-
+        stub_configuration(:user => nil)
         assert_equal 'host', @rwrc.send(:rsync_host, @server_stub)
       end
     end
 
     context 'command' do
       should 'remove local cache dir if it detects subversion info has changed' do
-        @configuration = {:scm => :subversion}
-        @rwrc.expects(:configuration).at_least_once.returns(@configuration)
+        stub_configuration(:scm => :subversion)
 
         @rwrc.expects(:`).returns('something else')
-        @rwrc.expects(:system) # with something else
+        @rwrc.expects(:system).with("rm -rf .rsync_cache")
 
         File.expects(:exists?).with('.rsync_cache').times(2).returns(false)
         File.expects(:directory?).with(File.dirname('.rsync_cache')).returns(false)
