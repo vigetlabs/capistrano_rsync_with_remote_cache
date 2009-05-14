@@ -18,18 +18,27 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     end
 
     should 'deploy!' do
-      # # Step 1: Update the local cache.
-      # system(command)
-      # File.open(File.join(local_cache, "REVISION"), "w") { |f| f.puts(revision) }
-      # 
-      # # Step 2: Update the remote cache.
-      # logger.trace "copying local cache to remote"
-      # find_servers(:except => { :no_release => true }).each do |server|
-      #   system("rsync #{rsync_options} #{local_cache}/ #{rsync_host(server)}:#{repository_cache}/")
-      # end
-      # 
-      # # Step 3: Copy the remote cache into place.
-      # run("rsync -a --delete #{repository_cache}/ #{configuration[:release_path]}/ && #{mark}")
+      @configuration = {:deploy_to => 'deploy_to', :release_path => 'release_path', :scm => :subversion}
+      @rwrc.expects(:configuration).at_least_once.returns(@configuration)
+      @rwrc.stubs(:shared_path).returns('shared')
+
+      # Step 1: Update the local cache.
+      @rwrc.expects(:command).returns('command')
+      @rwrc.expects(:system).with('command')
+      revision_file_stub = stub()
+      revision_file_stub.expects(:puts)
+      File.expects(:open).with(File.join('.rsync_cache', 'REVISION'), 'w').yields(revision_file_stub)
+
+      # Step 2: Update the remote cache.
+      server_stub = stub(:host => 'host')
+      @rwrc.expects(:system).with("rsync -az --delete .rsync_cache/ host:shared/cached-copy/")
+      @rwrc.expects(:find_servers).returns([server_stub])
+      
+      # Step 3: Copy the remote cache into place.
+      @rwrc.expects(:mark).returns('mark')
+      @rwrc.expects(:run).with("rsync -a --delete shared/cached-copy/ release_path/ && mark")
+
+      @rwrc.deploy!
     end
 
     should 'check!' do
