@@ -1,4 +1,5 @@
 require 'capistrano/recipes/deploy/strategy/remote'
+require 'fileutils'
 
 module Capistrano
   module Deploy
@@ -75,7 +76,7 @@ module Capistrano
           if (configuration[:scm] == :subversion &&
               `svn info #{local_cache} | sed -n 's/URL: //p'`.strip != configuration[:repository])
             logger.trace "repository has changed; removing old local cache"
-            system("rm -rf #{local_cache}")
+            FileUtils.rm_rf local_cache
           end
           if File.exists?(local_cache) && File.directory?(local_cache)
             logger.trace "updating local cache to revision #{revision}"
