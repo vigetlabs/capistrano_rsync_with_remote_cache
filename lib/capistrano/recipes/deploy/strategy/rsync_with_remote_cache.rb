@@ -73,10 +73,14 @@ module Capistrano
         #
         # TODO: punt in some sensible way if local_cache exists but is a regular file.
         def command
-          if (configuration[:scm] == :subversion &&
-              `svn info #{local_cache} | sed -n 's/URL: //p'`.strip != configuration[:repository])
-            logger.trace "repository has changed; removing old local cache"
-            FileUtils.rm_rf local_cache
+          if configuration[:scm] == :subversion
+            svn_info = IO.popen("svn info #{local_cache} | sed -n 's/URL: //p'")
+            svn_url = svn_info.gets.chomp
+            svn_info.close
+            if svn_url != configuration[:repository]
+              logger.trace "repository has changed; removing old local cache"
+              FileUtils.rm_rf local_cache
+            end
           end
           if File.exists?(local_cache) && File.directory?(local_cache)
             logger.trace "updating local cache to revision #{revision}"

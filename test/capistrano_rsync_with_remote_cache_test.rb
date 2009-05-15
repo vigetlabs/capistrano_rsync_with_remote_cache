@@ -118,13 +118,13 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
 
     context 'command' do
       should 'recreate local cache if it detects subversion info has changed' do
-        stub_configuration(:scm => :subversion)
-        # FIXME: replace this with a mocha expectation/stub
-        class << @rwrc
-          def `(cmd)
-            '\n'
-          end
-        end
+        stub_configuration(:scm => :subversion, :repository => 'repository')        
+
+        svn_info_stub = stub()
+        svn_info_stub.expects(:gets).returns("URL: url\n")
+        svn_info_stub.expects(:close)
+        IO.expects(:popen).with("svn info .rsync_cache | sed -n 's/URL: //p'").returns(svn_info_stub)
+
         FileUtils.expects(:rm_rf).with('.rsync_cache')
 
         stub_creation_of_new_local_cache
