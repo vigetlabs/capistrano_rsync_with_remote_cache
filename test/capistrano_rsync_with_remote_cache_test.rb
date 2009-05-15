@@ -9,20 +9,21 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     @rwrc.expects(:configuration).at_least_once.returns(hash)
   end
 
+  def stub_creation_of_new_local_cache
+    File.expects(:exists?).with('.rsync_cache').times(2).returns(false)
+    File.expects(:directory?).with(File.dirname('.rsync_cache')).returns(false)
+    Dir.expects(:mkdir).with(File.dirname('.rsync_cache'))
+    source_stub = stub()
+    source_stub.expects(:checkout)
+    @rwrc.expects(:source).returns(source_stub)
+  end
+  
   context 'RsyncWithRemoteCache' do
     setup do
       @rwrc = Capistrano::Deploy::Strategy::RsyncWithRemoteCache.new
-
       logger_stub = stub()
       logger_stub.stubs(:trace)
       @rwrc.stubs(:logger).returns(logger_stub)
-
-      # FIXME: this is lame
-      class << @rwrc
-        def `(cmd)
-          '\n'
-        end
-      end
     end
 
     should 'deploy!' do
@@ -116,22 +117,19 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     end
 
     context 'command' do
-      should 'remove local cache dir if it detects subversion info has changed' do
+      should 'recreate local cache if it detects subversion info has changed' do
         stub_configuration(:scm => :subversion)
-
-        @rwrc.expects(:`).returns('something else')
         @rwrc.expects(:system).with("rm -rf .rsync_cache")
+        # FIXME: replace this with a mocha expectation/stub
+        class << @rwrc
+          def `(cmd)
+            '\n'
+          end
+        end
 
-        File.expects(:exists?).with('.rsync_cache').times(2).returns(false)
-        File.expects(:directory?).with(File.dirname('.rsync_cache')).returns(false)
-        Dir.expects(:mkdir).with(File.dirname('.rsync_cache'))
-
-        source_stub = stub()
-        source_stub.expects(:checkout)
-        @rwrc.expects(:source).returns(source_stub)
+        stub_creation_of_new_local_cache
 
         @rwrc.send(:command)
-
       end
 
       should 'update local cache if it exists' do
@@ -144,13 +142,8 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
         @rwrc.send(:command)
       end
 
-      should 'update local cache if it does not exist' do
-        File.expects(:exists?).with('.rsync_cache').times(2).returns(false)
-        File.expects(:directory?).with(File.dirname('.rsync_cache')).returns(false)
-        Dir.expects(:mkdir).with(File.dirname('.rsync_cache'))
-        source_stub = stub()
-        source_stub.expects(:checkout)
-        @rwrc.expects(:source).returns(source_stub)
+      should 'create local cache if it does not exist' do
+        stub_creation_of_new_local_cache
 
         @rwrc.send(:command)
       end
