@@ -75,9 +75,9 @@ module Capistrano
         def command
           if configuration[:scm] == :subversion
             svn_info = IO.popen("svn info #{local_cache} | sed -n 's/URL: //p'")
-            svn_url = svn_info.gets.chomp
+            svn_url = svn_info.gets
             svn_info.close
-            if svn_url != configuration[:repository]
+            if svn_url && svn_url.chomp != configuration[:repository]
               logger.trace "repository has changed; removing old local cache"
               FileUtils.rm_rf local_cache
             end

@@ -117,7 +117,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     end
 
     context 'command' do
-      should 'recreate local cache if it detects subversion info has changed' do
+      should 'purge and recreate local cache if it detects subversion info has changed' do
         stub_configuration(:scm => :subversion, :repository => 'repository')        
 
         svn_info_stub = stub()
@@ -126,6 +126,32 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
         IO.expects(:popen).with("svn info .rsync_cache | sed -n 's/URL: //p'").returns(svn_info_stub)
 
         FileUtils.expects(:rm_rf).with('.rsync_cache')
+
+        stub_creation_of_new_local_cache
+
+        @rwrc.send(:command)
+      end
+
+      should 'not attempt to purge and recreate local cache that does not exist' do
+        stub_configuration(:scm => :subversion, :repository => 'repository')        
+
+        svn_info_stub = stub()
+        svn_info_stub.expects(:gets).returns(nil)
+        svn_info_stub.expects(:close)
+        IO.expects(:popen).with("svn info .rsync_cache | sed -n 's/URL: //p'").returns(svn_info_stub)
+
+        FileUtils.expects(:rm_rf).with('.rsync_cache').never
+
+        stub_creation_of_new_local_cache
+
+        @rwrc.send(:command)
+      end
+
+      should 'not attempt to purge and recreate local cache if the scm is not subversion' do
+        stub_configuration(:scm => :git, :repository => 'repository')        
+
+        IO.expects(:popen).with("svn info .rsync_cache | sed -n 's/URL: //p'").never
+        FileUtils.expects(:rm_rf).with('.rsync_cache').never
 
         stub_creation_of_new_local_cache
 
