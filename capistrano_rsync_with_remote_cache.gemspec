@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{capistrano_rsync_with_remote_cache}
-  s.version = "2.3.2"
+  s.version = "2.3.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Mark Cornick"]
-  s.date = %q{2009-05-15}
+  s.date = %q{2009-05-18}
   s.description = %q{A deployment strategy for Capistrano 2.0 which combines rsync with a remote cache, allowing fast deployments from SCM servers behind firewalls.}
   s.email = %q{mark@viget.com}
   s.extra_rdoc_files = [
