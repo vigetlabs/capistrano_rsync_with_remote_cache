@@ -67,12 +67,12 @@ module Capistrano
         # If it matches, we update it. If it doesn't match (either it's for another repository or
         # not a checkout at all), we remove the directory and recreate it with a fresh SCM checkout.
         # If the directory doesn't exist, we create it with a fresh SCM checkout.
-        #
-        # FIXME: The above logic only takes place if the SCM is Subversion. At some point, similar logic
-        # will probably be necessary for Git and other SCMs we might use.
-        #
-        # TODO: punt in some sensible way if local_cache exists but is a regular file.
         def command
+
+          # FIXME: This logic only takes place if the SCM is Subversion. At some point, similar logic
+          # will probably be necessary for Git and other SCMs we might use.
+          #
+          # TODO: punt in some sensible way if local_cache exists but is a regular file.
           if configuration[:scm] == :subversion
             svn_info = IO.popen("svn info #{local_cache} | sed -n 's/URL: //p'")
             svn_url = svn_info.gets
