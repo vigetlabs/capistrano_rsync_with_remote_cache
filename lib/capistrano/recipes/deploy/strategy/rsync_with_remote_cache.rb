@@ -62,27 +62,32 @@ module Capistrano
             server.host
           end
         end
-        
+
         # Command to get source from SCM on the local side. If the local_cache directory exists,
         # we check to see if it's an SCM checkout that matches the currently configured repository.
         # If it matches, we update it. If it doesn't match (either it's for another repository or
         # not a checkout at all), we remove the directory and recreate it with a fresh SCM checkout.
         # If the directory doesn't exist, we create it with a fresh SCM checkout.
+        # TODO: punt in some sensible way if local_cache exists but is a regular file.
         def command
-
-          # FIXME: This logic only takes place if the SCM is Subversion. At some point, similar logic
-          # will probably be necessary for Git and other SCMs we might use.
-          #
-          # TODO: punt in some sensible way if local_cache exists but is a regular file.
-          if configuration[:scm] == :subversion
-            svn_info = IO.popen("svn info #{local_cache} | sed -n 's/URL: //p'")
-            svn_url = svn_info.gets
-            svn_info.close
-            if svn_url && svn_url.chomp != configuration[:repository]
-              logger.trace "repository has changed; removing old local cache"
-              FileUtils.rm_rf local_cache
-            end
+          case configuration[:scm].to_s
+          when 'subversion'
+            info_command = "svn info #{local_cache} | sed -n 's/URL: //p'"
+          when 'git'
+            info_command = "cd #{local_cache} && git config remote.origin.url"
+          else
+            # an effective no-op
+            info_command = "echo #{configuration[:repository]}"
           end
+          cache_info = IO.popen(info_command)
+
+          cached_repository = cache_info.gets
+          cache_info.close
+          if cached_repository && cached_repository.chomp != configuration[:repository]
+            logger.trace "repository has changed; removing old local cache"
+            FileUtils.rm_rf local_cache
+          end
+
           if File.exists?(local_cache) && File.directory?(local_cache)
             logger.trace "updating local cache to revision #{revision}"
             cmd = source.sync(revision, local_cache)
