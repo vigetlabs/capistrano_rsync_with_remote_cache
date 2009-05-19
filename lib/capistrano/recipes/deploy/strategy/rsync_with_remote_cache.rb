@@ -6,7 +6,8 @@ module Capistrano
     module Strategy
       class RsyncWithRemoteCache < Remote
 
-        # The deployment method itself, in three major steps.
+        # The deployment method itself, in three major steps: update the local cache, update the remote
+        # cache, and copy the remote cache into place.
         def deploy!
 
           # Step 1: Update the local cache.
