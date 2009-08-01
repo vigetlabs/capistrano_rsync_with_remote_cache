@@ -6,9 +6,9 @@ This gem provides a deployment strategy for Capistrano which combines rsync with
 
 This gem requires Capistrano 2.0.0 or higher. Git support requires Capistrano 2.1.0 or higher.
 
-This gem has only been tested with Subversion and Git. It is unlikely to be supported for other SCM systems.
+This gem supports Subversion, Git, Mercurial and Bazaar. Only Subversion and Git have been extensively tested. This gem is unlikely to be supported for other SCM systems.
 
-This gem requires <tt>rsync</tt> command line utilities on the local and remote hosts. It also requires either <tt>svn</tt> or <tt>git</tt> on the local host, but not the remote host.
+This gem requires <tt>rsync</tt> command line utilities on the local and remote hosts. It also requires either <tt>svn</tt>, <tt>git</tt>, <tt>hg</tt> or <hg>bzr</hg> on the local host, but not the remote host.
 
 This gem is tested on Mac OS X and Linux. Windows is not tested or supported.
 

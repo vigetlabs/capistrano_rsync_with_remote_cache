@@ -70,11 +70,15 @@ module Capistrano
         # If the directory doesn't exist, we create it with a fresh SCM checkout.
         # TODO: punt in some sensible way if local_cache exists but is a regular file.
         def command
-          case configuration[:scm].to_s
-          when 'subversion'
+          case configuration[:scm]
+          when :subversion
             info_command = "svn info #{local_cache} | sed -n 's/URL: //p'"
-          when 'git'
+          when :git
             info_command = "cd #{local_cache} && git config remote.origin.url"
+          when :mercurial
+            info_command = "cd #{local_cache} && hg showconfig paths.default"
+          when :bzr
+            info_command = "cd #{local_cache} && bzr info | grep parent | sed 's/^.*parent branch: //'"
           else
             # an effective no-op
             info_command = "echo #{configuration[:repository]}"
