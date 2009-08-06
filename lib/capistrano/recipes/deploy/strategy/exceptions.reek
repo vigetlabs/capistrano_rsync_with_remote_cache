@@ -1,0 +1,14 @@
+---
+Duplication:
+  exclude:
+  - check!
+  - command
+  - deploy!
+  - rsync_host
+
+FeatureEnvy:
+  exclude:
+  - check!
+
+LongMethod: 
+  max_statements: 15

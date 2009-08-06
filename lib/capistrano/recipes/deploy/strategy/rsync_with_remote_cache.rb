@@ -12,7 +12,7 @@ module Capistrano
 
           # Step 1: Update the local cache.
           system(command)
-          File.open(File.join(local_cache, "REVISION"), "w") { |f| f.puts(revision) }
+          File.open(File.join(local_cache, "REVISION"), "w") { |file| file.puts(revision) }
 
           # Step 2: Update the remote cache.
           logger.trace "copying local cache to remote"
@@ -28,10 +28,10 @@ module Capistrano
         # on the local end, and rsync on both ends. Note that the SCM command is not needed on the
         # remote end.
         def check!
-          super.check do |d|
-            d.local.command(source.command)
-            d.local.command('rsync')
-            d.remote.command('rsync')
+          super.check do |check|
+            check.local.command(source.command)
+            check.local.command('rsync')
+            check.remote.command('rsync')
           end
         end
 
