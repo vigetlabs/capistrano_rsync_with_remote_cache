@@ -6,6 +6,13 @@ module Capistrano
     module Strategy
       class RsyncWithRemoteCache < Remote
 
+        INFO_COMMANDS = {
+          :subversion => "svn info . | sed -n \'s/URL: //p\'",
+          :git        => "git config remote.origin.url",
+          :mercurial  => "hg showconfig paths.default",
+          :bzr        => "bzr info | grep parent | sed \'s/^.*parent branch: //\'"
+        }
+
         # The deployment method itself, in three major steps: update the local cache, update the remote
         # cache, and copy the remote cache into place.
         def deploy!
@@ -63,45 +70,34 @@ module Capistrano
           end
         end
 
-        # Command to get source from SCM on the local side. If the local_cache directory exists,
-        # we check to see if it's an SCM checkout that matches the currently configured repository.
-        # If it matches, we update it. If it doesn't match (either it's for another repository or
-        # not a checkout at all), we remove the directory and recreate it with a fresh SCM checkout.
-        # If the directory doesn't exist, we create it with a fresh SCM checkout.
+        # Remove the local cache (so it can be recreated) if the repository URL has changed
+        # since the last deployment.
         # TODO: punt in some sensible way if local_cache exists but is a regular file.
+        def remove_cache_if_repo_changed
+          if INFO_COMMANDS[configuration[:scm]] && File.directory?(local_cache)
+            info_command = "cd #{local_cache} && #{INFO_COMMANDS[configuration[:scm]]}"
+            cached_repo_url = IO.popen(info_command){|pipe| pipe.readline}.chomp
+            if cached_repo_url != configuration[:repository]
+              logger.trace "repository has changed; removing old local cache"
+              FileUtils.rm_rf(local_cache)
+            end
+          end
+        end
+
+        # Command to get source from SCM on the local side. The local cache is either created,
+        # updated, or destroyed and recreated depending on whether it exists and is a cache of
+        # the right repository.
         def command
-          case configuration[:scm]
-          when :subversion
-            info_command = "svn info #{local_cache} | sed -n 's/URL: //p'"
-          when :git
-            info_command = "cd #{local_cache} && git config remote.origin.url"
-          when :mercurial
-            info_command = "cd #{local_cache} && hg showconfig paths.default"
-          when :bzr
-            info_command = "cd #{local_cache} && bzr info | grep parent | sed 's/^.*parent branch: //'"
-          else
-            # an effective no-op
-            info_command = "echo #{configuration[:repository]}"
-          end
-          cache_info = IO.popen(info_command)
-
-          cached_repository = cache_info.gets
-          cache_info.close
-          if cached_repository && cached_repository.chomp != configuration[:repository]
-            logger.trace "repository has changed; removing old local cache"
-            FileUtils.rm_rf local_cache
-          end
-
+          remove_cache_if_repo_changed
           if File.exists?(local_cache) && File.directory?(local_cache)
             logger.trace "updating local cache to revision #{revision}"
-            cmd = source.sync(revision, local_cache)
+            return source.sync(revision, local_cache)
           else
             logger.trace "creating local cache with revision #{revision}"
             File.delete(local_cache) if File.exists?(local_cache)
             Dir.mkdir(File.dirname(local_cache)) unless File.directory?(File.dirname(local_cache))
-            cmd = source.checkout(revision, local_cache)
+            return source.checkout(revision, local_cache)
           end
-          cmd
         end
       end
     end

@@ -9,25 +9,9 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     @rwrc.expects(:configuration).at_least_once.returns(hash)
   end
 
-  def stub_creation_of_new_local_cache
-    File.expects(:exists?).with('.rsync_cache').times(2).returns(false)
-    File.expects(:directory?).with(File.dirname('.rsync_cache')).returns(false)
-    Dir.expects(:mkdir).with(File.dirname('.rsync_cache'))
-    source_stub = stub()
-    source_stub.expects(:checkout)
-    @rwrc.expects(:source).returns(source_stub)
-  end
-
-  def stub_detection_of_changed_local_cache(command, returns)
-    cache_info_stub = stub()
-    cache_info_stub.expects(:gets).returns(returns)
-    cache_info_stub.expects(:close)
-    IO.expects(:popen).with(command).returns(cache_info_stub)
-  end
-
-  def stub_recreation_of_local_cache
-    FileUtils.expects(:rm_rf).with('.rsync_cache')
-    stub_creation_of_new_local_cache
+  def stub_detection_of_changed_local_cache(command, returned)
+    File.expects(:directory?).with('.rsync_cache').returns(true)
+    IO.expects(:popen).with(command).returns(returned)
   end
 
   context 'RsyncWithRemoteCache' do
@@ -128,66 +112,66 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       end
     end
 
-    context 'command' do
+    context 'remove_cache_if_repo_changed' do
       should 'purge local cache if it detects subversion info has changed' do
         stub_configuration(:scm => :subversion, :repository => 'repository')
-        stub_detection_of_changed_local_cache("svn info .rsync_cache | sed -n 's/URL: //p'", "URL: url\n")
-        stub_recreation_of_local_cache
-        @rwrc.send(:command)
+        stub_detection_of_changed_local_cache("cd .rsync_cache && svn info . | sed -n 's/URL: //p'", "URL: url\n")
+        FileUtils.expects(:rm_rf).with('.rsync_cache')
+        @rwrc.send(:remove_cache_if_repo_changed)
       end
 
       should 'purge local cache if it detects git info has changed' do
         stub_configuration(:scm => :git, :repository => 'repository')
         stub_detection_of_changed_local_cache("cd .rsync_cache && git config remote.origin.url", "beep\n")
-        stub_recreation_of_local_cache
-        @rwrc.send(:command)
+        FileUtils.expects(:rm_rf).with('.rsync_cache')
+        @rwrc.send(:remove_cache_if_repo_changed)
       end
 
       should 'purge local cache if it detects hg info has changed' do
         stub_configuration(:scm => :mercurial, :repository => 'repository')
         stub_detection_of_changed_local_cache("cd .rsync_cache && hg showconfig paths.default", "beep\n")
-        stub_recreation_of_local_cache
-        @rwrc.send(:command)
+        FileUtils.expects(:rm_rf).with('.rsync_cache')
+        @rwrc.send(:remove_cache_if_repo_changed)
       end
 
       should 'purge local cache if it detects bzr info has changed' do
         stub_configuration(:scm => :bzr, :repository => 'repository')
         stub_detection_of_changed_local_cache("cd .rsync_cache && bzr info | grep parent | sed 's/^.*parent branch: //'", "beep\n")
-        stub_recreation_of_local_cache
-        @rwrc.send(:command)
+        FileUtils.expects(:rm_rf).with('.rsync_cache')
+        @rwrc.send(:remove_cache_if_repo_changed)
       end
 
       should 'not attempt to purge local cache that does not exist' do
         stub_configuration(:scm => :subversion, :repository => 'repository')
-        stub_detection_of_changed_local_cache("svn info .rsync_cache | sed -n 's/URL: //p'", nil)
+        File.expects(:directory?).with('.rsync_cache').returns(false)
         FileUtils.expects(:rm_rf).with('.rsync_cache').never
-        stub_creation_of_new_local_cache
-
-        @rwrc.send(:command)
+        @rwrc.send(:remove_cache_if_repo_changed)
       end
 
       should 'not attempt to purge local cache if the scm is not supported by this gem' do
         stub_configuration(:scm => :cvs, :repository => 'repository')
-        stub_detection_of_changed_local_cache("echo repository", "repository\n")
         FileUtils.expects(:rm_rf).with('.rsync_cache').never
-        stub_creation_of_new_local_cache
-
-        @rwrc.send(:command)
+        @rwrc.send(:remove_cache_if_repo_changed)
       end
+    end
 
+    context 'command' do
       should 'update local cache if it exists' do
         File.expects(:exists?).with('.rsync_cache').returns(true)
         File.expects(:directory?).with('.rsync_cache').returns(true)
         source_stub = stub()
         source_stub.expects(:sync)
         @rwrc.expects(:source).returns(source_stub)
-
         @rwrc.send(:command)
       end
 
       should 'create local cache if it does not exist' do
-        stub_creation_of_new_local_cache
-
+        File.expects(:exists?).with('.rsync_cache').times(2).returns(false)
+        File.expects(:directory?).with(File.dirname('.rsync_cache')).returns(false)
+        Dir.expects(:mkdir).with(File.dirname('.rsync_cache'))
+        source_stub = stub()
+        source_stub.expects(:checkout)
+        @rwrc.expects(:source).returns(source_stub)
         @rwrc.send(:command)
       end
     end

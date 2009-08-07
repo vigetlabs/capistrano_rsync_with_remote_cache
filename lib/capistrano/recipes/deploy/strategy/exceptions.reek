@@ -5,10 +5,11 @@ Duplication:
   - command
   - deploy!
   - rsync_host
+  - remove_cache_if_repo_changed
 
 FeatureEnvy:
   exclude:
   - check!
 
 LongMethod: 
-  max_statements: 15
+  max_statements: 10
