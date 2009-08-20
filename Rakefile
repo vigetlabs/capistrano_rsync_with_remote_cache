@@ -12,9 +12,11 @@ begin
     gem.authors = ["Mark Cornick"]
     gem.rubyforge_project = "viget"
     gem.add_dependency 'capistrano', '>= 2.0'
+    gem.add_development_dependency "thoughtbot-shoulda"
+    gem.add_development_dependency "yard"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
-
+  Jeweler::GemcutterTasks.new
   Jeweler::RubyforgeTasks.new do |rubyforge|
     rubyforge.doc_task = "yardoc"
   end
@@ -42,6 +44,8 @@ rescue LoadError
     abort "RCov is not available. In order to run rcov, you must: sudo gem install relevance-rcov"
   end
 end
+
+task :test => :check_dependencies
 
 begin
   require 'reek/rake_task'
@@ -77,6 +81,6 @@ begin
   end
 rescue LoadError
   task :yardoc do
-    abort "Yard is not available. In order to run yardoc, you must: sudo gem install yard"
+    abort "YARD is not available. In order to run yardoc, you must: sudo gem install yard"
   end
 end
