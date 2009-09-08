@@ -9,6 +9,10 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     @rwrc.expects(:configuration).at_least_once.returns(hash)
   end
 
+  def stub_ssh_options(hash)
+    @rwrc.expects(:ssh_options).at_least_once.returns(hash)
+  end
+
   context 'RsyncWithRemoteCache' do
     setup do
       @rwrc = Capistrano::Deploy::Strategy::RsyncWithRemoteCache.new
@@ -19,6 +23,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
 
     should 'deploy!' do
       stub_configuration(:deploy_to => 'deploy_to', :release_path => 'release_path', :scm => :subversion)
+      stub_ssh_options(:port => nil)
       @rwrc.stubs(:shared_path).returns('shared')
 
       # Step 1: Update the local cache.
@@ -30,7 +35,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
 
       # Step 2: Update the remote cache.
       server_stub = stub(:host => 'host')
-      @rwrc.expects(:system).with("rsync -az --delete .rsync_cache/ host:shared/cached-copy/")
+      @rwrc.expects(:system).with("rsync -az --delete --rsh='ssh -p 22' .rsync_cache/ host:shared/cached-copy/")
       @rwrc.expects(:find_servers).returns([server_stub])
 
       # Step 3: Copy the remote cache into place.
@@ -88,6 +93,18 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       should 'return default options if not present in configuration' do
         stub_configuration(:rsync_options => nil)
         assert_equal '-az --delete', @rwrc.send(:rsync_options)
+      end
+    end
+
+    context 'ssh_port' do
+      should 'return specified port if present in configuration' do
+        stub_ssh_options(:port => 2222)
+        assert_equal 2222, @rwrc.send(:ssh_port)
+      end
+
+      should 'return default port if not present in configuration' do
+        stub_ssh_options(:port => nil)
+        assert_equal 22, @rwrc.send(:ssh_port)
       end
     end
 
