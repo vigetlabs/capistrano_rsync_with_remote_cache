@@ -5,22 +5,22 @@
 
 Gem::Specification.new do |s|
   s.name = %q{capistrano_rsync_with_remote_cache}
-  s.version = "2.3.5"
+  s.version = "2.3.6"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Mark Cornick"]
-  s.date = %q{2009-08-07}
+  s.date = %q{2009-09-08}
   s.description = %q{A deployment strategy for Capistrano 2.0 which combines rsync with a remote cache, allowing fast deployments from SCM servers behind firewalls.}
   s.email = %q{mark@viget.com}
   s.extra_rdoc_files = [
     "LICENSE",
-     "README.rdoc"
+     "README.md"
   ]
   s.files = [
     ".document",
      ".gitignore",
      "LICENSE",
-     "README.rdoc",
+     "README.md",
      "Rakefile",
      "VERSION",
      "capistrano_rsync_with_remote_cache.gemspec",
@@ -46,10 +46,16 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<capistrano>, [">= 2.0"])
+      s.add_development_dependency(%q<thoughtbot-shoulda>, [">= 0"])
+      s.add_development_dependency(%q<yard>, [">= 0"])
     else
       s.add_dependency(%q<capistrano>, [">= 2.0"])
+      s.add_dependency(%q<thoughtbot-shoulda>, [">= 0"])
+      s.add_dependency(%q<yard>, [">= 0"])
     end
   else
     s.add_dependency(%q<capistrano>, [">= 2.0"])
+    s.add_dependency(%q<thoughtbot-shoulda>, [">= 0"])
+    s.add_dependency(%q<yard>, [">= 0"])
   end
 end
