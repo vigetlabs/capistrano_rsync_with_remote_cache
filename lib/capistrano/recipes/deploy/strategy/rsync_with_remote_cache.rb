@@ -46,26 +46,34 @@ module Capistrano
 
         # Path to the remote cache. We use a variable name and default that are compatible with
         # the stock remote_cache strategy, for easy migration.
+        # @return [String] the path to the remote cache
         def repository_cache
           File.join(shared_path, configuration[:repository_cache] || "cached-copy")
         end
 
         # Path to the local cache. If not specified in the Capfile, we use an arbitrary default.
+        # @return [String] the path to the local cache
         def local_cache
           configuration[:local_cache] || ".rsync_cache"
         end
 
         # Options to use for rsync in step 2. If not specified in the Capfile, we use the default
         # from prior versions.
+        # @return [String] the options to be passed to rsync
         def rsync_options
           configuration[:rsync_options] || "-az --delete"
         end
 
+        # Port to use for rsync in step 2. If not specified with (ssh_options) in the Capfile, we
+        # use the default well-known port 22.
+        # @return [Fixnum] the port to connect to with rsync
         def ssh_port
           ssh_options[:port] || 22
         end
 
-        # Returns the host used in the rsync command, prefixed with user@ if user is specified in Capfile.
+        # Get a hostname to be used in the rsync command.
+        # @param [Capistrano::ServerDefinition, #host] the host which rsync will connect to
+        # @return [String] the hostname, prefixed with user@ if necessary
         def rsync_host(server)
           if configuration[:user]
             "#{configuration[:user]}@#{server.host}"
@@ -91,6 +99,7 @@ module Capistrano
         # Command to get source from SCM on the local side. The local cache is either created,
         # updated, or destroyed and recreated depending on whether it exists and is a cache of
         # the right repository.
+        # @return [String] command to either checkout or update the local cache
         def command
           remove_cache_if_repo_changed
           if File.exists?(local_cache) && File.directory?(local_cache)
