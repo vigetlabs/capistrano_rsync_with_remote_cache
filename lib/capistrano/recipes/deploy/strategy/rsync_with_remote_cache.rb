@@ -87,7 +87,7 @@ module Capistrano
         # TODO: punt in some sensible way if local_cache exists but is a regular file.
         def remove_cache_if_repo_changed
           if INFO_COMMANDS[configuration[:scm]] && File.directory?(local_cache)
-            info_command = "cd #{local_cache} && #{INFO_COMMANDS[configuration[:scm]]}"
+            info_command = "cd #{File.expand_path(local_cache)} && #{INFO_COMMANDS[configuration[:scm]]}"
             cached_repo_url = IO.popen(info_command){|pipe| pipe.readline}.chomp
             if cached_repo_url != configuration[:repository]
               logger.trace "repository has changed; removing old local cache"
