@@ -1,8 +1,9 @@
-# This test suite was written way after the code, back when the author didn't do TDD consistently.
-# Also, the code does a lot of things with external servers and services, so there's a lot of mocking.
-# Therefore, this suite is nearly impossible to follow in places. Sorry.
+require 'rubygems'
+require 'test/unit'
+require 'shoulda'
+require 'mocha'
 
-require 'test_helper'
+require 'capistrano/recipes/deploy/strategy/rsync_with_remote_cache'
 
 class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
   def stub_configuration(hash)
@@ -129,6 +130,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
         should "purge local cache if it detects #{scm} info has changed" do
           stub_configuration(:scm => scm, :repository => 'repository')
           info_command = Capistrano::Deploy::Strategy::RsyncWithRemoteCache::INFO_COMMANDS[scm]
+          File.stubs(:expand_path).with('.rsync_cache').returns('.rsync_cache')
           File.expects(:directory?).with('.rsync_cache').returns(true)
           IO.expects(:popen).with("cd .rsync_cache && #{info_command}").returns('abc')
           FileUtils.expects(:rm_rf).with('.rsync_cache')
