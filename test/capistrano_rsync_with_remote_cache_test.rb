@@ -1,176 +1,281 @@
 require 'rubygems'
 require 'test/unit'
-require 'shoulda'
 require 'mocha'
+require 'shoulda'
+require 'matchy'
+require 'tmpdir'
 
 require 'capistrano/recipes/deploy/strategy/rsync_with_remote_cache'
 
 class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
-  def stub_configuration(hash)
-    @rwrc.expects(:configuration).at_least_once.returns(hash)
+  
+  context "An instance of the CapistranoRsyncWithRemoteCache class" do
+    setup { @strategy = Capistrano::Deploy::Strategy::RsyncWithRemoteCache.new }
+
+    should "know the default rsync options" do
+      @strategy.rsync_options.should == '-az --delete'
+    end
+    
+    should "allow overriding of the rsync options" do
+      @strategy.stubs(:configuration).with().returns(:rsync_options => 'new_opts')
+      @strategy.rsync_options.should == 'new_opts'
+    end
+
+    should "know the default local cache name" do
+      @strategy.local_cache.should == '.rsync_cache'
+    end
+    
+    should "know the local cache name if it has been configured" do
+      @strategy.stubs(:configuration).with().returns(:local_cache => 'cache')
+      @strategy.local_cache.should == 'cache'
+    end
+    
+    should "know the cache path" do
+      @strategy.stubs(:local_cache).with().returns('cache_dir')
+      File.expects(:expand_path).with('cache_dir').returns('local_cache_path')
+      
+      @strategy.local_cache_path.should == 'local_cache_path'
+    end
+    
+    should "know the repository URL for a subversion repository" do
+      @strategy.stubs(:local_cache_path).with().returns('cache_path')
+      @strategy.stubs(:configuration).with().returns(:scm => :subversion)
+      @strategy.expects(:`).with("cd cache_path && svn info . | sed -n \'s/URL: //p\'").returns("svn_url\n")
+      @strategy.repository_url.should == 'svn_url'
+    end
+    
+    should "know the repository URL for a git repository" do
+      @strategy.stubs(:local_cache_path).with().returns('cache_path')
+      @strategy.stubs(:configuration).with().returns(:scm => :git)
+      @strategy.expects(:`).with("cd cache_path && git config remote.origin.url").returns("git_url\n")
+      @strategy.repository_url.should == 'git_url'
+    end
+    
+    should "know the repository URL for a mercurial repository" do
+      @strategy.stubs(:local_cache_path).with().returns('cache_path')
+      @strategy.stubs(:configuration).with().returns(:scm => :mercurial)
+      @strategy.expects(:`).with("cd cache_path && hg showconfig paths.default").returns("hg_url\n")
+      @strategy.repository_url.should == 'hg_url'
+    end
+    
+    should "know the repository URL for a bzr repository" do
+      @strategy.stubs(:local_cache_path).with().returns('cache_path')
+      @strategy.stubs(:configuration).with().returns(:scm => :bzr)
+      @strategy.expects(:`).with("cd cache_path && bzr info | grep parent | sed \'s/^.*parent branch: //\'").returns("bzr_url\n")
+      @strategy.repository_url.should == 'bzr_url'
+    end
+    
+    should "know that the repository URL has not changed" do
+      @strategy.stubs(:repository_url).with().returns('repo_url')
+      @strategy.stubs(:configuration).with().returns(:repository => 'repo_url')
+      
+      @strategy.repository_url_changed?.should be(false)
+    end
+    
+    should "know that the repository URL has changed" do
+      @strategy.stubs(:repository_url).with().returns('new_repo_url')
+      @strategy.stubs(:configuration).with().returns(:repository => 'old_repo_url')
+      
+      @strategy.repository_url_changed?.should be(true)
+    end
+    
+    should "be able to remove the local cache" do
+      @strategy.stubs(:logger).with().returns(stub(:trace))
+      @strategy.stubs(:local_cache_path).with().returns('local_cache_path')
+      FileUtils.expects(:rm_rf).with('local_cache_path')
+      
+      @strategy.remove_local_cache
+    end
+    
+    should "remove the local cache if the repository URL has changed" do
+      @strategy.stubs(:repository_url_changed?).with().returns(true)
+      @strategy.expects(:remove_local_cache).with()
+      
+      @strategy.remove_cache_if_repository_url_changed
+    end
+    
+    should "not remove the local cache if the repository URL has not changed" do
+      @strategy.stubs(:repository_url_changed?).with().returns(false)
+      @strategy.expects(:remove_local_cache).with().never
+      
+      @strategy.remove_cache_if_repository_url_changed
+    end
+    
+    should "know the default SSH port" do
+      @strategy.stubs(:ssh_options).with().returns({})
+      @strategy.ssh_port.should == 22
+    end
+    
+    should "be able to override the default SSH port" do
+      @strategy.stubs(:ssh_options).with().returns({:port => 95})
+      @strategy.ssh_port.should == 95
+    end
+
+    should "know the default repository cache" do
+      @strategy.repository_cache.should == 'cached-copy'
+    end
+    
+    should "be able to override the default repository cache" do
+      @strategy.stubs(:configuration).with().returns(:repository_cache => 'other_cache')
+      @strategy.repository_cache.should == 'other_cache'
+    end
+    
+    should "know the repository cache path" do
+      @strategy.stubs(:shared_path).with().returns('shared_path')
+      @strategy.stubs(:repository_cache).with().returns('cache_path')
+      
+      File.expects(:join).with('shared_path', 'cache_path').returns('path')
+      @strategy.repository_cache_path.should == 'path'
+    end
+    
+    should "be able to determine the hostname for the rsync command" do
+      server = stub(:host => 'host.com')
+      @strategy.rsync_host(server).should == 'host.com'
+    end
+    
+    should "be able to determine the hostname for the rsync command when a user is configured" do
+      @strategy.stubs(:configuration).with().returns(:user => 'foobar')
+      server = stub(:host => 'host.com')
+      
+      @strategy.rsync_host(server).should == 'foobar@host.com'
+    end
+    
+    should "know that the local cache exists" do
+      @strategy.stubs(:local_cache_path).with().returns('path')
+      File.stubs(:exist?).with('path').returns(true)
+      
+      @strategy.local_cache_exists?.should be(true)
+    end
+    
+    should "know that the local cache does not exist" do
+      @strategy.stubs(:local_cache_path).with().returns('path')
+      File.stubs(:exist?).with('path').returns(false)
+      
+      @strategy.local_cache_exists?.should be(false)
+    end
+    
+    should "know that the local cache is not valid if it does not exist" do
+      @strategy.stubs(:local_cache_exists?).with().returns(false)
+      @strategy.local_cache_valid?.should be(false)
+    end
+    
+    should "know that the local cache is not valid if it's not a directory" do
+      @strategy.stubs(:local_cache_path).with().returns('path')
+      @strategy.stubs(:local_cache_exists?).with().returns(true)
+      
+      File.stubs(:directory?).with('path').returns(false)
+      @strategy.local_cache_valid?.should be(false)
+    end
+    
+    should "know that the local cache is valid" do
+      @strategy.stubs(:local_cache_path).with().returns('path')
+      @strategy.stubs(:local_cache_exists?).with().returns(true)
+      
+      File.stubs(:directory?).with('path').returns(true)
+      @strategy.local_cache_valid?.should be(true)
+    end
+    
+    should "know the SCM command when the local cache is valid" do
+      source = mock() {|s| s.expects(:sync).with('revision', 'path').returns('scm_command') }
+      
+      @strategy.stubs(:local_cache_valid?).with().returns(true)
+      @strategy.stubs(:local_cache_path).with().returns('path')
+      @strategy.stubs(:revision).with().returns('revision')
+      @strategy.stubs(:source).with().returns(source)
+      
+      @strategy.send(:command).should == 'scm_command'
+    end
+    
+    should "know the SCM command when the local cache does not exist" do
+      source = mock() {|s| s.expects(:checkout).with('revision', 'path').returns('scm_command') }
+      
+      @strategy.stubs(:local_cache_valid?).with().returns(false)
+      @strategy.stubs(:local_cache_exists?).with().returns(false)
+      @strategy.stubs(:local_cache_path).with().returns('path')
+      @strategy.stubs(:revision).with().returns('revision')
+      @strategy.stubs(:source).with().returns(source)
+      
+      @strategy.send(:command).should == 'mkdir -p path && scm_command'
+    end
+    
+    should "raise an exception when the local cache is invalid" do
+      @strategy.stubs(:local_cache_valid?).with().returns(false)
+      @strategy.stubs(:local_cache_exists?).with().returns(true)
+  
+      lambda {
+        @strategy.send(:command) 
+      }.should raise_error(Capistrano::Deploy::Strategy::RsyncWithRemoteCache::InvalidCacheError)
+    end
+    
+    should "be able to tag the local cache" do
+      local_cache_path = Dir.tmpdir
+      @strategy.stubs(:revision).with().returns('1')
+      @strategy.stubs(:local_cache_path).with().returns(local_cache_path)
+      
+      @strategy.tag_local_cache
+      
+      File.read(File.join(local_cache_path, 'REVISION')).should == '1'
+    end
+    
+    should "be able to update the local cache" do
+      @strategy.stubs(:command).with().returns('scm_command')
+      @strategy.expects(:system).with('scm_command')
+      @strategy.expects(:tag_local_cache).with()
+      
+      @strategy.update_local_cache
+    end
+    
+    should "be able to run the rsync command on a server" do
+      server = stub()
+      
+      @strategy.stubs(:rsync_host).with(server).returns('rsync_host')
+      
+      @strategy.stubs(
+        :rsync_options         => 'rsync_options', 
+        :ssh_port              => 'ssh_port',
+        :local_cache_path      => 'local_cache_path',
+        :repository_cache_path => 'repository_cache_path'
+      )
+      
+      expected = "rsync rsync_options --rsh='ssh -p ssh_port' local_cache_path/ rsync_host:repository_cache_path/"
+      
+      @strategy.rsync_command_for(server).should == expected
+    end
+    
+    should "be able to update the remote cache" do
+      server_1, server_2 = [stub(), stub()]
+      @strategy.stubs(:find_servers).with(:except => {:no_release => true}).returns([server_1, server_2])
+      
+      @strategy.stubs(:rsync_command_for).with(server_1).returns('server_1_rsync_command')
+      @strategy.stubs(:rsync_command_for).with(server_2).returns('server_2_rsync_command')
+      
+      @strategy.expects(:system).with('server_1_rsync_command')
+      @strategy.expects(:system).with('server_2_rsync_command')
+      
+      @strategy.update_remote_cache
+    end
+    
+    should "be able copy the remote cache into place" do
+      @strategy.stubs(
+        :repository_cache_path => 'repository_cache_path',
+        :configuration         => {:release_path => 'release_path'},
+        :mark                  => 'mark_command'
+      )
+      
+      command = "rsync -a --delete repository_cache_path/ release_path/ && mark_command"
+      @strategy.expects(:run).with(command)
+      
+      @strategy.copy_remote_cache
+    end
+    
+    should "be able to deploy" do
+      @strategy.expects(:update_local_cache).with()
+      @strategy.expects(:update_remote_cache).with()
+      @strategy.expects(:copy_remote_cache).with()
+      
+      @strategy.deploy!
+    end
+    
   end
-
-  def stub_ssh_options(hash)
-    @rwrc.expects(:ssh_options).at_least_once.returns(hash)
-  end
-
-  context 'RsyncWithRemoteCache' do
-    setup do
-      @rwrc = Capistrano::Deploy::Strategy::RsyncWithRemoteCache.new
-      logger_stub = stub()
-      logger_stub.stubs(:trace)
-      @rwrc.stubs(:logger).returns(logger_stub)
-    end
-
-    should 'deploy!' do
-      stub_configuration(:deploy_to => 'deploy_to', :release_path => 'release_path', :scm => :subversion)
-      stub_ssh_options(:port => nil)
-      @rwrc.stubs(:shared_path).returns('shared')
-
-      # Step 1: Update the local cache.
-      @rwrc.expects(:command).returns('command')
-      @rwrc.expects(:system).with('command')
-      revision_file_stub = stub()
-      revision_file_stub.expects(:puts)
-      File.expects(:open).with(File.join('.rsync_cache', 'REVISION'), 'w').yields(revision_file_stub)
-
-      # Step 2: Update the remote cache.
-      server_stub = stub(:host => 'host')
-      @rwrc.expects(:system).with("rsync -az --delete --rsh='ssh -p 22' .rsync_cache/ host:shared/cached-copy/")
-      @rwrc.expects(:find_servers).returns([server_stub])
-
-      # Step 3: Copy the remote cache into place.
-      @rwrc.expects(:mark).returns('mark')
-      @rwrc.expects(:run).with("rsync -a --delete shared/cached-copy/ release_path/ && mark")
-
-      @rwrc.deploy!
-    end
-
-    should 'check!' do
-      configuration = {:releases_path => 'releases_path', :deploy_to => 'deploy_to'}
-      configuration.stubs(:invoke_command)
-      @rwrc.expects(:configuration).at_least_once.returns(configuration)
-
-      source_stub = stub(:command => 'command')
-      @rwrc.stubs(:source).returns(source_stub)
-
-      @rwrc.check!
-    end
-
-    context 'repository_cache' do
-      setup do
-        @rwrc.expects(:shared_path).returns('shared')
-      end
-
-      should 'return specified cache if present in configuration' do
-        stub_configuration(:repository_cache => 'cache')
-        assert_equal 'shared/cache', @rwrc.send(:repository_cache)
-      end
-
-      should 'return default cache if not present in configuration' do
-        stub_configuration(:repository_cache => nil)
-        assert_equal 'shared/cached-copy', @rwrc.send(:repository_cache)
-      end
-    end
-
-    context 'local_cache' do
-      should 'return specified cache if present in configuration' do
-        stub_configuration(:local_cache => 'cache')
-        assert_equal 'cache', @rwrc.send(:local_cache)
-      end
-
-      should 'return default cache if not present in configuration' do
-        stub_configuration(:local_cache => nil)
-        assert_equal '.rsync_cache', @rwrc.send(:local_cache)
-      end
-    end
-
-    context 'rsync_options' do
-      should 'return specified options if present in configuration' do
-        stub_configuration(:rsync_options => 'options')
-        assert_equal 'options', @rwrc.send(:rsync_options)
-      end
-
-      should 'return default options if not present in configuration' do
-        stub_configuration(:rsync_options => nil)
-        assert_equal '-az --delete', @rwrc.send(:rsync_options)
-      end
-    end
-
-    context 'ssh_port' do
-      should 'return specified port if present in configuration' do
-        stub_ssh_options(:port => 2222)
-        assert_equal 2222, @rwrc.send(:ssh_port)
-      end
-
-      should 'return default port if not present in configuration' do
-        stub_ssh_options(:port => nil)
-        assert_equal 22, @rwrc.send(:ssh_port)
-      end
-    end
-
-    context 'rsync_host' do
-      setup do
-        @server_stub = stub(:host => 'host')
-      end
-
-      should 'prefix user if present in configuration' do
-        stub_configuration(:user => 'user')
-        assert_equal 'user@host', @rwrc.send(:rsync_host, @server_stub)
-      end
-
-      should 'not prefix user if not present in configuration' do
-        stub_configuration(:user => nil)
-        assert_equal 'host', @rwrc.send(:rsync_host, @server_stub)
-      end
-    end
-
-    context 'remove_cache_if_repo_changed' do
-      [:subversion, :git, :mercurial, :bzr].each do |scm|
-        should "purge local cache if it detects #{scm} info has changed" do
-          stub_configuration(:scm => scm, :repository => 'repository')
-          info_command = Capistrano::Deploy::Strategy::RsyncWithRemoteCache::INFO_COMMANDS[scm]
-          File.stubs(:expand_path).with('.rsync_cache').returns('.rsync_cache')
-          File.expects(:directory?).with('.rsync_cache').returns(true)
-          IO.expects(:popen).with("cd .rsync_cache && #{info_command}").returns('abc')
-          FileUtils.expects(:rm_rf).with('.rsync_cache')
-          @rwrc.send(:remove_cache_if_repo_changed)
-        end
-      end
-
-      should 'not attempt to purge local cache if it does not exist' do
-        stub_configuration(:scm => :subversion, :repository => 'repository')
-        File.expects(:directory?).with('.rsync_cache').returns(false)
-        FileUtils.expects(:rm_rf).with('.rsync_cache').never
-        @rwrc.send(:remove_cache_if_repo_changed)
-      end
-
-      should 'not attempt to purge local cache if the scm is not supported by this gem' do
-        stub_configuration(:scm => :cvs, :repository => 'repository')
-        FileUtils.expects(:rm_rf).with('.rsync_cache').never
-        @rwrc.send(:remove_cache_if_repo_changed)
-      end
-    end
-
-    context 'command' do
-      should 'update local cache if it exists' do
-        File.expects(:exists?).with('.rsync_cache').returns(true)
-        File.expects(:directory?).with('.rsync_cache').returns(true)
-        source_stub = stub()
-        source_stub.expects(:sync)
-        @rwrc.expects(:source).returns(source_stub)
-        @rwrc.send(:command)
-      end
-
-      should 'create local cache if it does not exist' do
-        File.expects(:exists?).with('.rsync_cache').times(2).returns(false)
-        File.expects(:directory?).with(File.dirname('.rsync_cache')).returns(false)
-        Dir.expects(:mkdir).with(File.dirname('.rsync_cache'))
-        source_stub = stub()
-        source_stub.expects(:checkout)
-        @rwrc.expects(:source).returns(source_stub)
-        @rwrc.send(:command)
-      end
-    end
-  end
+  
 end
