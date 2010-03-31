@@ -9,8 +9,8 @@ spec = Gem::Specification.new do |s|
   s.extra_rdoc_files = %w(README.rdoc)
   s.rdoc_options     = %w(--main README.rdoc)
   s.summary          = "A deployment strategy for Capistrano 2.0 which combines rsync with a remote cache, allowing fast deployments from SCM servers behind firewalls."
-  s.author           = 'Mark Cornick'
-  s.email            = 'developers@viget.com'
+  s.authors          = ['Patrick Reagan', 'Mark Cornick']
+  s.email            = 'patrick.reagan@viget.com'
   s.homepage         = 'http://www.viget.com/extend/'
   s.files            = %w(README.rdoc Rakefile) + Dir.glob("{lib,test}/**/*")
   
