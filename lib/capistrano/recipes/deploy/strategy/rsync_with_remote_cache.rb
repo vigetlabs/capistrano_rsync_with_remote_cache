@@ -8,12 +8,20 @@ module Capistrano
         
         class InvalidCacheError < Exception; end
 
+        def self.default_attribute(attribute, default_value)
+          define_method(attribute) { configuration[attribute] || default_value }
+        end
+
         INFO_COMMANDS = {
           :subversion => "svn info . | sed -n \'s/URL: //p\'",
           :git        => "git config remote.origin.url",
           :mercurial  => "hg showconfig paths.default",
           :bzr        => "bzr info | grep parent | sed \'s/^.*parent branch: //\'"
         }
+        
+        default_attribute :rsync_options, '-az --delete'
+        default_attribute :local_cache, '.rsync_cache'
+        default_attribute :repository_cache, 'cached-copy'
 
         def deploy!
           update_local_cache
@@ -41,18 +49,6 @@ module Capistrano
         
         def tag_local_cache
           File.open(File.join(local_cache_path, 'REVISION'), 'w') {|f| f << revision }
-        end
-        
-        def rsync_options
-          configuration[:rsync_options] || "-az --delete"
-        end
-        
-        def local_cache
-          configuration[:local_cache] || '.rsync_cache'
-        end
-        
-        def repository_cache
-          configuration[:repository_cache] || 'cached-copy'
         end
         
         def ssh_port
