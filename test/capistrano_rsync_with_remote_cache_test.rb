@@ -212,7 +212,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       @strategy.stubs(:revision).with().returns('1')
       @strategy.stubs(:local_cache_path).with().returns(local_cache_path)
       
-      @strategy.tag_local_cache
+      @strategy.mark_local_cache
       
       File.read(File.join(local_cache_path, 'REVISION')).should == '1'
     end
@@ -220,7 +220,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     should "be able to update the local cache" do
       @strategy.stubs(:command).with().returns('scm_command')
       @strategy.expects(:system).with('scm_command')
-      @strategy.expects(:tag_local_cache).with()
+      @strategy.expects(:mark_local_cache).with()
       
       @strategy.update_local_cache
     end
@@ -258,11 +258,10 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     should "be able copy the remote cache into place" do
       @strategy.stubs(
         :repository_cache_path => 'repository_cache_path',
-        :configuration         => {:release_path => 'release_path'},
-        :mark                  => 'mark_command'
+        :configuration         => {:release_path => 'release_path'}
       )
       
-      command = "rsync -a --delete repository_cache_path/ release_path/ && mark_command"
+      command = "rsync -a --delete repository_cache_path/ release_path/"
       @strategy.expects(:run).with(command)
       
       @strategy.copy_remote_cache

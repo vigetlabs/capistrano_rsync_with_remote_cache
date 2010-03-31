@@ -31,7 +31,7 @@ module Capistrano
         
         def update_local_cache
           system(command)
-          tag_local_cache
+          mark_local_cache
         end
         
         def update_remote_cache
@@ -40,14 +40,14 @@ module Capistrano
         end
         
         def copy_remote_cache
-          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/ && #{mark}")
+          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/")
         end
         
         def rsync_command_for(server)
           "rsync #{rsync_options} --rsh='ssh -p #{ssh_port}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
         end
         
-        def tag_local_cache
+        def mark_local_cache
           File.open(File.join(local_cache_path, 'REVISION'), 'w') {|f| f << revision }
         end
         
