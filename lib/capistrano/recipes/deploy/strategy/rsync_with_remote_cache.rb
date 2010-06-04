@@ -44,15 +44,15 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
         end
         
         def mark_local_cache
           File.open(File.join(local_cache_path, 'REVISION'), 'w') {|f| f << revision }
         end
         
-        def ssh_port
-          ssh_options[:port] || 22
+        def ssh_port(server)
+          server.port || ssh_options[:port] || 22
         end
         
         def local_cache_path

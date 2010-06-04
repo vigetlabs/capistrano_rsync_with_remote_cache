@@ -103,12 +103,20 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     
     should "know the default SSH port" do
       @strategy.stubs(:ssh_options).with().returns({})
-      @strategy.ssh_port.should == 22
+      server = stub(:port => nil)
+      @strategy.ssh_port(server).should == 22
     end
     
     should "be able to override the default SSH port" do
       @strategy.stubs(:ssh_options).with().returns({:port => 95})
-      @strategy.ssh_port.should == 95
+      server = stub(:port => nil)
+      @strategy.ssh_port(server).should == 95
+    end
+
+    should "be able to override the default SSH port for each server" do
+      @strategy.stubs(:ssh_options).with().returns({:port => 95})
+      server = stub(:port => 123)
+      @strategy.ssh_port(server).should == 123
     end
 
     should "know the default repository cache" do
