@@ -64,6 +64,12 @@ Finally, a copy of the remote cache is made in the appropriate release
 directory. The end result is the same as if the code had been checked out
 directly on the remote server, as in the default strategy.
 
+== Contributors
+
+Thanks to the people who submitted patches:
+
+* {S. Brent Faulkner}[http://github.com/sbfaulkner]
+
 == License
 
 Copyright (c) 2007 - 2010 Patrick Reagan (patrick.reagan@viget.com) & Mark Cornick
