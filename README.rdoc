@@ -3,16 +3,16 @@
 == Description
 
 This gem provides a deployment strategy for Capistrano which combines the
-<tt>rsync</tt> command with a remote cache, allowing fast deployments from SCM 
+<tt>rsync</tt> command with a remote cache, allowing fast deployments from SCM
 repositories behind firewalls.
 
 == Requirements
 
 This gem supports Subversion, Git, Mercurial and Bazaar. Only Subversion and
-Git have been extensively tested. This gem is unlikely to be supported for 
+Git have been extensively tested. This gem is unlikely to be supported for
 other SCM systems.
 
-This gem requires the <tt>rsync</tt> command-line utilities on the local and 
+This gem requires the <tt>rsync</tt> command-line utilities on the local and
 remote hosts. It also requires either <tt>svn</tt>, <tt>git</tt>, <tt>hg</tt>
 or <tt>bzr</tt> on the local host, but not the remote host.
 
@@ -32,41 +32,41 @@ To use this deployment strategy, add this line to your <tt>deploy.rb</tt> file:
 
 This strategy maintains two cache directories:
 
-* The local cache directory is a checkout from the SCM repository. The local 
-  cache directory is specified with the <tt>:local_cache</tt> variable in the 
-  configuration. If not specified, it will default to <tt>.rsync_cache</tt> 
+* The local cache directory is a checkout from the SCM repository. The local
+  cache directory is specified with the <tt>:local_cache</tt> variable in the
+  configuration. If not specified, it will default to <tt>.rsync_cache</tt>
   in the same directory as the Capfile.
-  
-* The remote cache directory is an <tt>rsync</tt> copy of the local cache directory. 
+
+* The remote cache directory is an <tt>rsync</tt> copy of the local cache directory.
   The remote cache directory is specified with the <tt>:repository_cache</tt> variable
-  in the configuration (this name comes from the <tt>:remote_cache</tt> strategy that 
-  ships with Capistrano, and has been maintained for compatibility.) If not 
-  specified, it will default to <tt>shared/cached-copy</tt> (again, for compatibility 
+  in the configuration (this name comes from the <tt>:remote_cache</tt> strategy that
+  ships with Capistrano, and has been maintained for compatibility.) If not
+  specified, it will default to <tt>shared/cached-copy</tt> (again, for compatibility
   with remote_cache.)
 
-Deployment happens in three major steps. First, the local cache directory is 
+Deployment happens in three major steps. First, the local cache directory is
 processed. There are three possibilities:
 
-* If the local cache does not exist, it is created with a checkout of the 
+* If the local cache does not exist, it is created with a checkout of the
   revision to be deployed.
-* If the local cache exists and matches the <tt>:repository</tt> variable, it is 
+* If the local cache exists and matches the <tt>:repository</tt> variable, it is
   updated to the revision to be deployed.
-* If the local cache exists and does not match the <p>:repository</p> variable, 
-  the local cache is purged and recreated with a checkout of the revision 
+* If the local cache exists and does not match the <p>:repository</p> variable,
+  the local cache is purged and recreated with a checkout of the revision
   to be deployed.
 * If the local cache exists but is not a directory, an exception is raised
 
-Second, <tt>rsync</tt> runs on the local side to sync the remote cache to the local 
-cache. When the <tt>rsync</tt> is complete, the remote cache should be an exact 
+Second, <tt>rsync</tt> runs on the local side to sync the remote cache to the local
+cache. When the <tt>rsync</tt> is complete, the remote cache should be an exact
 replica of the local cache.
 
-Finally, a copy of the remote cache is made in the appropriate release 
-directory. The end result is the same as if the code had been checked out 
+Finally, a copy of the remote cache is made in the appropriate release
+directory. The end result is the same as if the code had been checked out
 directly on the remote server, as in the default strategy.
 
 == License
 
-Copyright (c) 2007 - 2010 Patrick Reagan (patrick.reagan@viget.com) & Mark Cornick 
+Copyright (c) 2007 - 2010 Patrick Reagan (patrick.reagan@viget.com) & Mark Cornick
 
 Permission is hereby granted, free of charge, to any person
 obtaining a copy of this software and associated documentation
