@@ -26,7 +26,6 @@ module Capistrano
         def deploy!
           update_local_cache
           update_remote_cache
-          copy_remote_cache
         end
         
         def update_local_cache
@@ -44,7 +43,7 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' --link-dest=#{current_path}/ #{local_cache_path}/ #{rsync_host(server)}:#{configuration[:release_path]}/"
         end
         
         def mark_local_cache
