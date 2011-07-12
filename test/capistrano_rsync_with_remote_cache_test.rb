@@ -275,12 +275,25 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       @strategy.stubs(:rsync_command_for).with(server_1).returns('server_1_rsync_command')
       @strategy.stubs(:rsync_command_for).with(server_2).returns('server_2_rsync_command')
       
-      @strategy.expects(:system).with('server_1_rsync_command')
-      @strategy.expects(:system).with('server_2_rsync_command')
+      @strategy.expects(:system).with('server_1_rsync_command').returns(true)
+      @strategy.expects(:system).with('server_2_rsync_command').returns(true)
       
       @strategy.update_remote_cache
     end
     
+    should "notice failure to update teh remote cache" do
+      server_1, server_2 = [stub(), stub()]
+      @strategy.stubs(:find_servers).with(:except => {:no_release => true}).returns([server_1, server_2])
+
+      @strategy.stubs(:rsync_command_for).with(server_1).returns('server_1_rsync_command')
+      @strategy.stubs(:rsync_command_for).with(server_2).returns('server_2_rsync_command')
+
+      @strategy.expects(:system).with('server_1_rsync_command').returns(false)
+      @strategy.expects(:system).with('server_2_rsync_command').never
+ 
+      lambda { @strategy.update_remote_cache }.should raise_error
+    end
+
     should "be able copy the remote cache into place" do
       @strategy.stubs(
         :repository_cache_path => 'repository_cache_path',
