@@ -101,10 +101,16 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       @strategy.remove_cache_if_repository_url_changed
     end
     
-    should "know the default SSH port" do
+    should "not have a default SSH port" do
       @strategy.stubs(:ssh_options).with().returns({})
       server = stub(:port => nil)
-      @strategy.ssh_port(server).should == 22
+      @strategy.ssh_port(server).should == nil
+    end
+    
+    should "not specify a 'ssh -p' option by default" do
+      @strategy.stubs(:ssh_options).with().returns({})
+      server = stub(:port => nil)
+      @strategy.ssh_port_option(server).should == ''
     end
     
     should "be able to override the default SSH port" do
@@ -118,6 +124,13 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       server = stub(:port => 123)
       @strategy.ssh_port(server).should == 123
     end
+    
+    should "know the ssh port option when a SSH port is specified" do
+      @strategy.stubs(:ssh_options).with().returns({:port => 95})
+      server = stub(:port => nil)
+      @strategy.ssh_port_option(server).should == ' -p 95'
+    end
+      
 
     should "know the default repository cache" do
       @strategy.repository_cache.should == 'cached-copy'
