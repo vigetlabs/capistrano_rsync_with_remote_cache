@@ -36,7 +36,7 @@ module Capistrano
         
         def update_remote_cache
           finder_options = {:except => { :no_release => true }}
-          find_servers(finder_options).each {|s| system(rsync_command_for(s)) }
+          find_servers(finder_options).each {|s| system(rsync_command_for(s)) or raise "Command failed" }
         end
         
         def copy_remote_cache
