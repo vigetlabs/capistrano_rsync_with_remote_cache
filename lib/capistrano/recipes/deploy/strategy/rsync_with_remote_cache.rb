@@ -44,17 +44,17 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='#{remote_shell_command}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='#{remote_shell_command(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
         end
         
         def mark_local_cache
           File.open(File.join(local_cache_path, 'REVISION'), 'w') {|f| f << revision }
         end
         
-        def remote_shell_command
+        def remote_shell_command(server)
           cmd = "ssh -p #{ssh_port(server)}"
           if ssh_options.has_key?(:config)
-            cmd << %Q{ -F "#{ssh_option[:config]}"}
+            cmd << %Q{ -F "#{ssh_options[:config]}"}
           end
           cmd
         end
