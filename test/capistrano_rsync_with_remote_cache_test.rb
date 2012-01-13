@@ -240,7 +240,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       
       @strategy.stubs(
         :rsync_options         => 'rsync_options', 
-        :ssh_port              => 'ssh_port',
+        :remote_shell_command  => 'ssh -p ssh_port',
         :local_cache_path      => 'local_cache_path',
         :repository_cache_path => 'repository_cache_path'
       )
