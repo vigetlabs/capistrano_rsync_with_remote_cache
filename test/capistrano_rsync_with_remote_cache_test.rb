@@ -1,4 +1,4 @@
-require 'rubygems'
+require 'bundler'
 require 'test/unit'
 require 'mocha'
 require 'shoulda'

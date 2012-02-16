@@ -15,10 +15,21 @@ spec = Gem::Specification.new do |s|
   s.files            = %w(README.rdoc Rakefile) + Dir.glob("{lib,test}/**/*")
 
   s.add_dependency('capistrano', '>=2.1.0')
+  s.add_runtime_dependency('rake')
+  s.add_runtime_dependency('mocha')
+  s.add_runtime_dependency('shoulda')
+  s.add_runtime_dependency('jnunemaker-matchy')
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
   pkg.gem_spec = spec
+end
+
+desc "Generate gemspec"
+task :gemspec do
+  File.open("capistrano_rsync_with_remote_cache.gemspec", "w") do |file|
+    file.write(spec.to_ruby)
+  end
 end
 
 Rake::TestTask.new do |t|
