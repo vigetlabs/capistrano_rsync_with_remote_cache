@@ -30,13 +30,19 @@ module Capistrano
         end
         
         def update_local_cache
-          system(command)
+          unless system(command)
+            raise "Unable to update local cache"
+          end
           mark_local_cache
         end
         
         def update_remote_cache
           finder_options = {:except => { :no_release => true }}
-          find_servers(finder_options).each {|s| system(rsync_command_for(s)) }
+          find_servers(finder_options).each do |server|
+            unless system(rsync_command_for(server))
+              raise "Unable to update remote cache"
+            end
+          end
         end
         
         def copy_remote_cache
