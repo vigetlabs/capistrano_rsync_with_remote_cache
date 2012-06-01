@@ -44,7 +44,7 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' '#{local_cache_path}/' #{rsync_host(server)}:#{repository_cache_path}/"
         end
         
         def mark_local_cache
