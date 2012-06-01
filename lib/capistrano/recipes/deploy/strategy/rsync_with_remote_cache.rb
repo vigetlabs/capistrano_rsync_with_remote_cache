@@ -36,7 +36,7 @@ module Capistrano
         
         def update_remote_cache
           finder_options = {:except => { :no_release => true }}
-          find_servers(finder_options).each {|s| system(rsync_command_for(s)) }
+          find_servers(finder_options).each {|s| system(rsync_command_for(s)) or raise "Command failed" }
         end
         
         def copy_remote_cache
@@ -44,7 +44,12 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='ssh#{ssh_port_option(server)}#{" -o \"ProxyCommand ssh #{configuration[:gateway]} nc -w300 %h %p\"" if configuration[:gateway]}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+        end
+        
+        def ssh_port_option(server)
+          port = ssh_port(server)
+          port ? " -p #{port}" : ""
         end
         
         def mark_local_cache
@@ -52,7 +57,7 @@ module Capistrano
         end
         
         def ssh_port(server)
-          server.port || ssh_options[:port] || 22
+          server.port || ssh_options[:port] || nil
         end
         
         def local_cache_path

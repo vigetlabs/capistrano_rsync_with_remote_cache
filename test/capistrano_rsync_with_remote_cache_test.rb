@@ -101,10 +101,16 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       @strategy.remove_cache_if_repository_url_changed
     end
     
-    should "know the default SSH port" do
+    should "not have a default SSH port" do
       @strategy.stubs(:ssh_options).with().returns({})
       server = stub(:port => nil)
-      @strategy.ssh_port(server).should == 22
+      @strategy.ssh_port(server).should == nil
+    end
+    
+    should "not specify a 'ssh -p' option by default" do
+      @strategy.stubs(:ssh_options).with().returns({})
+      server = stub(:port => nil)
+      @strategy.ssh_port_option(server).should == ''
     end
     
     should "be able to override the default SSH port" do
@@ -118,6 +124,13 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       server = stub(:port => 123)
       @strategy.ssh_port(server).should == 123
     end
+    
+    should "know the ssh port option when a SSH port is specified" do
+      @strategy.stubs(:ssh_options).with().returns({:port => 95})
+      server = stub(:port => nil)
+      @strategy.ssh_port_option(server).should == ' -p 95'
+    end
+      
 
     should "know the default repository cache" do
       @strategy.repository_cache.should == 'cached-copy'
@@ -250,6 +263,24 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       @strategy.rsync_command_for(server).should == expected
     end
     
+    should "be able to run the rsync command through a gateway" do
+      server = stub()
+
+      @strategy.stubs(:rsync_host).with(server).returns('rsync_host')
+      @strategy.configuration.stubs(:[]).with(:gateway).returns('ssh_gateway')
+
+      @strategy.stubs(
+        :rsync_options         => 'rsync_options',
+        :ssh_port              => 'ssh_port',
+        :local_cache_path      => 'local_cache_path',
+        :repository_cache_path => 'repository_cache_path'
+      )
+
+      expected = "rsync rsync_options --rsh='ssh -p ssh_port -o \"ProxyCommand ssh ssh_gateway nc -w300 %h %p\"' local_cache_path/ rsync_host:repository_cache_path/"
+
+      @strategy.rsync_command_for(server).should == expected
+    end
+
     should "be able to update the remote cache" do
       server_1, server_2 = [stub(), stub()]
       @strategy.stubs(:find_servers).with(:except => {:no_release => true}).returns([server_1, server_2])
@@ -257,12 +288,25 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
       @strategy.stubs(:rsync_command_for).with(server_1).returns('server_1_rsync_command')
       @strategy.stubs(:rsync_command_for).with(server_2).returns('server_2_rsync_command')
       
-      @strategy.expects(:system).with('server_1_rsync_command')
-      @strategy.expects(:system).with('server_2_rsync_command')
+      @strategy.expects(:system).with('server_1_rsync_command').returns(true)
+      @strategy.expects(:system).with('server_2_rsync_command').returns(true)
       
       @strategy.update_remote_cache
     end
     
+    should "notice failure to update teh remote cache" do
+      server_1, server_2 = [stub(), stub()]
+      @strategy.stubs(:find_servers).with(:except => {:no_release => true}).returns([server_1, server_2])
+
+      @strategy.stubs(:rsync_command_for).with(server_1).returns('server_1_rsync_command')
+      @strategy.stubs(:rsync_command_for).with(server_2).returns('server_2_rsync_command')
+
+      @strategy.expects(:system).with('server_1_rsync_command').returns(false)
+      @strategy.expects(:system).with('server_2_rsync_command').never
+ 
+      lambda { @strategy.update_remote_cache }.should raise_error
+    end
+
     should "be able copy the remote cache into place" do
       @strategy.stubs(
         :repository_cache_path => 'repository_cache_path',
