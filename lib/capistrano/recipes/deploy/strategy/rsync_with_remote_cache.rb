@@ -44,7 +44,7 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path_with_offset} #{rsync_host(server)}:#{repository_cache_path}/"
         end
         
         def mark_local_cache
@@ -57,6 +57,10 @@ module Capistrano
         
         def local_cache_path
           File.expand_path(local_cache)
+        end
+
+        def local_cache_path_with_offset
+          File.join(local_cache_path, configuration[:rsync_with_remote_cache_path_offset].to_s, '')
         end
         
         def repository_cache_path
