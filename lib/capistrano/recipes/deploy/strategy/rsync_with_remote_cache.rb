@@ -19,7 +19,7 @@ module Capistrano
           :bzr        => "bzr info | grep parent | sed \'s/^.*parent branch: //\'"
         }
         
-        default_attribute :rsync_options, '-az --delete --exclude \'.git\''
+        default_attribute :rsync_options, "-az --delete --exclude '.git/'"
         default_attribute :local_cache, '.rsync_cache'
         default_attribute :repository_cache, 'cached-copy'
 

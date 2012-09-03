@@ -13,7 +13,7 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
     setup { @strategy = Capistrano::Deploy::Strategy::RsyncWithRemoteCache.new }
 
     should "know the default rsync options" do
-      @strategy.rsync_options.should == '-az --delete'
+      @strategy.rsync_options.should == "-az --delete --exclude '.git/'"
     end
     
     should "allow overriding of the rsync options" do
