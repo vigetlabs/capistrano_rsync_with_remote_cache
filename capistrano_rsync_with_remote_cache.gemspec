@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |s|
   s.name = %q{capistrano_rsync_with_remote_cache}
-  s.version = "2.4.1"
+  s.version = "2.4.0govuk1"
 
   s.authors = ["Patrick Reagan", "Mark Cornick"]
   s.date = %q{2012-02-16}
