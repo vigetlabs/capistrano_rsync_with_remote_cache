@@ -21,4 +21,7 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'mocha'
   s.add_development_dependency 'shoulda'
   s.add_development_dependency 'jnunemaker-matchy'
+
+  s.add_development_dependency 'gem_publisher', '~> 1.1.1'
+  s.add_development_dependency 'gemfury'
 end
