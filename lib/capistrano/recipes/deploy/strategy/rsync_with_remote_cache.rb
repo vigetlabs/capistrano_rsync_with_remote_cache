@@ -107,7 +107,11 @@ module Capistrano
 
         def command
           if local_cache_valid?
-            source.sync(revision, local_cache_path)
+            if configuration[:scm] != :none
+              ""
+            else
+              source.sync(revision, local_cache_path)
+            end
           elsif !local_cache_exists?
             "mkdir -p #{local_cache_path} && #{source.checkout(revision, local_cache_path)}"
           else
