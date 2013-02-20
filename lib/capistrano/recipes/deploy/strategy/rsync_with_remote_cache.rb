@@ -107,7 +107,7 @@ module Capistrano
 
         def command
           if local_cache_valid?
-            if configuration[:scm] != :none
+            if configuration[:scm] == :none
               ""
             else
               source.sync(revision, local_cache_path)
