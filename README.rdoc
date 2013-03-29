@@ -1,4 +1,4 @@
-= Capistrano rsync_with_remote_cache Deployment Strategy
+= Öz Capistrano oz_rsync_with_remote_cache Deployment Strategy
 
 == Description
 
@@ -20,7 +20,7 @@ This gem is tested on Mac OS X and Linux. Windows is neither tested nor supporte
 
 == Installation
 
-    gem install capistrano_rsync_with_remote_cache
+    gem install oz_capistrano_rsync_with_remote_cache
 
 == Usage
 

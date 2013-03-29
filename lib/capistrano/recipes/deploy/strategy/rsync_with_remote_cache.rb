@@ -44,7 +44,7 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)} #{ssh_key} #{ssh_config_file}' '#{local_cache_path}/' #{rsync_host(server)}:#{repository_cache_path}/"
         end
         
         def mark_local_cache
@@ -53,6 +53,14 @@ module Capistrano
         
         def ssh_port(server)
           server.port || ssh_options[:port] || 22
+        end
+
+        def ssh_key
+          ssh_options[:keys] ? "-i #{ssh_options[:keys]}" : ""
+        end
+
+        def ssh_config_file
+          ssh_options[:config] ? "-F #{ssh_options[:config]}" : ""
         end
         
         def local_cache_path
@@ -106,12 +114,17 @@ module Capistrano
         private
 
         def command
-          if local_cache_valid?
-            source.sync(revision, local_cache_path)
-          elsif !local_cache_exists?
-            "mkdir -p #{local_cache_path} && #{source.checkout(revision, local_cache_path)}"
+          if configuration[:scm] == :none
+            #If scm is NONE, we don't need to sync
+            logger.info ":scm is none and we dont need to sync"
           else
-            raise InvalidCacheError, "The local cache exists but is not valid (#{local_cache_path})"
+            if local_cache_valid?
+              source.sync(revision, local_cache_path)
+            elsif !local_cache_exists?
+              "mkdir -p #{local_cache_path} && #{source.checkout(revision, local_cache_path)}"
+            else
+              raise InvalidCacheError, "The local cache exists but is not valid (#{local_cache_path})"
+            end
           end
         end
       end
