@@ -55,7 +55,7 @@ module Capistrano
           server.port || ssh_options[:port] || 22
         end
 
-		def ssh_key
+        def ssh_key
           ssh_options[:keys] ? "-i #{ssh_options[:keys]}" : ""
         end
 
