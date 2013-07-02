@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |gem|
   gem.name          = "capistrano-improved-rsync-with-remote-cache"
-  gem.version       = "0.0.9"
+  gem.version       = "1.0.0"
   gem.authors       = ["Carlos Buenosvinos"]
   gem.email         = ["hi@carlos.io"]
   gem.homepage      = "https://github.com/carlosbuenosvinos/capistrano-improved-rsync-with-remote-cache"
@@ -14,5 +14,5 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
 
-  gem.add_dependency('capistrano', '>=2.1.0')
+  gem.add_dependency('capistrano', '>=2.4.0')
 end
