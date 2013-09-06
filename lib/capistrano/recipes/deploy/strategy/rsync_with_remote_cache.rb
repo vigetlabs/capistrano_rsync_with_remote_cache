@@ -40,7 +40,9 @@ module Capistrano
         end
         
         def copy_remote_cache
-          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/")
+          copy_exclude = configuration[:copy_exclude] || []
+          exclusions = copy_exclude.map { |e| "--exclude=\"#{e}\"" }.join(' ')
+          run("rsync -a --delete #{exclusions} #{repository_cache_path}/ #{configuration[:release_path]}/")
         end
         
         def rsync_command_for(server)

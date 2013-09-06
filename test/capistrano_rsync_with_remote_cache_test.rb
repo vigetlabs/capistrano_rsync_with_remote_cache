@@ -268,8 +268,20 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
         :repository_cache_path => 'repository_cache_path',
         :configuration         => {:release_path => 'release_path'}
       )
-      
-      command = "rsync -a --delete repository_cache_path/ release_path/"
+
+      command = "rsync -a --delete  repository_cache_path/ release_path/"
+      @strategy.expects(:run).with(command)
+
+      @strategy.copy_remote_cache
+    end
+
+    should "be able copy the remote cache into place with exclusions" do
+      @strategy.stubs(
+        :repository_cache_path => 'repository_cache_path',
+        :configuration         => {:release_path => 'release_path', :copy_exclude => ['.git', 'data']}
+      )
+
+      command = 'rsync -a --delete --exclude=".git" --exclude="data" repository_cache_path/ release_path/'
       @strategy.expects(:run).with(command)
       
       @strategy.copy_remote_cache
