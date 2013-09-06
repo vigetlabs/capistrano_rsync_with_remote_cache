@@ -46,7 +46,9 @@ module Capistrano
         end
         
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          sync_exclude = configuration[:sync_exclude] || []
+          exclusions = sync_exclude.map { |e| "--exclude=\"#{e}\"" }.join(' ')
+          "rsync #{rsync_options} #{exclusions} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
         end
         
         def mark_local_cache

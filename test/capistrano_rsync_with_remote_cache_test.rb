@@ -242,11 +242,12 @@ class CapistranoRsyncWithRemoteCacheTest < Test::Unit::TestCase
         :rsync_options         => 'rsync_options', 
         :ssh_port              => 'ssh_port',
         :local_cache_path      => 'local_cache_path',
-        :repository_cache_path => 'repository_cache_path'
+        :repository_cache_path => 'repository_cache_path',
+        :configuration         => { sync_exclude: [ '.git', 'data' ]  }
       )
       
-      expected = "rsync rsync_options --rsh='ssh -p ssh_port' local_cache_path/ rsync_host:repository_cache_path/"
       
+      expected = %q(rsync rsync_options --exclude=".git" --exclude="data" --rsh='ssh -p ssh_port' local_cache_path/ rsync_host:repository_cache_path/)
       @strategy.rsync_command_for(server).should == expected
     end
     
