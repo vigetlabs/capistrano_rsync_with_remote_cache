@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.extra_rdoc_files = ["README.rdoc"]
   s.rdoc_options     = ["--main", "README.rdoc"]
 
-  s.add_runtime_dependency 'capistrano', '>= 2.1.0'
+  s.add_runtime_dependency 'capistrano', '~> 2.9.0'
 
   s.add_development_dependency 'rake'
   s.add_development_dependency 'mocha'
