@@ -40,7 +40,7 @@ module Capistrano
         end
         
         def copy_remote_cache
-          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/")
+          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/ && touch #{configuration[:release_path]}/")
         end
         
         def rsync_command_for(server)
@@ -100,6 +100,7 @@ module Capistrano
             check.local.command(source.command)
             check.local.command('rsync')
             check.remote.command('rsync')
+            check.remote.command('touch')
           end
         end
 
