@@ -40,7 +40,7 @@ module Capistrano
         end
         
         def copy_remote_cache
-          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/")
+          run("rsync -azx #{repository_cache_path}/ #{configuration[:release_path]}/")
         end
         
         def rsync_command_for(server)
