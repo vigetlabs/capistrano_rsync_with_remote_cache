@@ -8,6 +8,8 @@ module Capistrano
       class RsyncWithRemoteCache < Remote
 
         class InvalidCacheError < Exception; end
+        class RsyncFailedError < Exception; end
+        class LocalCacheUpdateFailedError < Exception; end
 
         def self.default_attribute(attribute, default_value)
           define_method(attribute) { configuration[attribute] || default_value }
@@ -25,6 +27,7 @@ module Capistrano
         default_attribute :repository_cache, 'cached-copy'
         default_attribute :rsync_concurrency, 8
         default_attribute :rsync_in_parallel, false
+        default_attribute :rsync_ssh_options, '-o PasswordAuthentication=no -o StrictHostKeyChecking=no'
 
         def deploy!
           update_local_cache
@@ -57,7 +60,7 @@ module Capistrano
         end
 
         def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)}' #{local_cache_path}/ #{rsync_host(server)}:#{repository_cache_path}/"
+          "rsync #{rsync_options} --rsh='ssh -p #{ssh_port(server)} #{rsync_ssh_options}' '#{local_cache_path}/' #{rsync_host(server)}:#{repository_cache_path}/"
         end
 
         def mark_local_cache
