@@ -31,7 +31,7 @@ If you want to enable the parallel deployment:
 
 If you want to tune the number of threads:
 
-    set :rsync_concurrency, true
+    set :rsync_concurrency, 8
 
 By default, the deployments spawns 8 threads.
 
