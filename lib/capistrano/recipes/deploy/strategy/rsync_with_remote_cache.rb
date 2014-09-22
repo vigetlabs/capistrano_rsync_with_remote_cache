@@ -24,7 +24,7 @@ module Capistrano
         default_attribute :local_cache, '.rsync_cache'
         default_attribute :repository_cache, 'cached-copy'
         default_attribute :rsync_concurrency, 8
-        default_attribute :rsync_in_parallel, true
+        default_attribute :rsync_in_parallel, false
 
         def deploy!
           update_local_cache

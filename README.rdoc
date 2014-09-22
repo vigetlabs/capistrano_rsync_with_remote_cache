@@ -25,6 +25,16 @@ To use this deployment strategy, add this line to your <tt>deploy.rb</tt> file:
 
     set :deploy_via, :improved_rsync_with_remote_cache
 
+If you want to enable the parallel deployment:
+
+    set :rsync_in_parallel, true
+
+If you want to tune the number of threads:
+
+    set :rsync_concurrency, true
+
+By default, the deployments spawns 8 threads.
+
 == Under the Hood
 
 This strategy maintains two cache directories:
