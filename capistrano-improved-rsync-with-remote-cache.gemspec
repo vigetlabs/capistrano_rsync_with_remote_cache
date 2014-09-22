@@ -2,9 +2,9 @@
 
 Gem::Specification.new do |gem|
   gem.name          = "capistrano-improved-rsync-with-remote-cache"
-  gem.version       = "1.0.0"
+  gem.version       = "1.1.0"
   gem.authors       = ["Carlos Buenosvinos"]
-  gem.email         = ["hi@carlos.io"]
+  gem.email         = ["carlos.buenosvinos@gmail.com"]
   gem.homepage      = "https://github.com/carlosbuenosvinos/capistrano-improved-rsync-with-remote-cache"
   gem.summary       = %q{Improved version of rsync-with-remote-cache deployment strategy.}
   gem.description   = %q{Improved version of rsync-with-remote-cache deployment strategy.}
@@ -15,4 +15,5 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
 
   gem.add_dependency('capistrano', '>=2.4.0')
+  gem.add_dependency('parallel', '>=0.0.0')
 end
