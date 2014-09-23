@@ -47,7 +47,7 @@ module Capistrano
         def update_remote_cache
           finder_options = {:except => { :no_release => true }}
           if rsync_in_parallel
-            Parallel.map(find_servers(finder_options), :in_threads => rsync_concurrency) do |s|
+            Parallel.map(find_servers(finder_options), :in_processes => rsync_concurrency) do |s|
               system!(rsync_command_for(s))
             end.all?
           else
@@ -56,7 +56,7 @@ module Capistrano
         end
 
         def copy_remote_cache
-          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/")
+          run("rsync -azx #{repository_cache_path}/ #{configuration[:release_path]}/")
         end
 
         def rsync_command_for(server)
