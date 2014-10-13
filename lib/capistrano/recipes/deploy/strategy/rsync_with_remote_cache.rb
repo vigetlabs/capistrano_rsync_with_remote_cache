@@ -103,8 +103,6 @@ module Capistrano
           end
         end
 
-        private
-
         def command
           if local_cache_valid?
             source.sync(revision, local_cache_path)
