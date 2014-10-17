@@ -109,27 +109,56 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
     end
   end
 
-
   describe "#ssh_port" do
-    it "knows the default value" do
-      server = double(:port => nil)
+    let(:server) { double(:port => nil) }
 
+    it "is nil by default" do
       allow(subject).to receive(:ssh_options).with(no_args).and_return({})
-      expect(subject.ssh_port(server)).to eq(22)
+      expect(subject.ssh_port(server)).to be_nil
     end
 
-    it "can be globally overridden" do
+    it "uses the configured SSH port if specified" do
       server = double(:port => nil)
 
-      allow(subject).to receive(:ssh_options).with(no_args).and_return({:port => 95})
+      allow(subject).to receive_messages({
+        :ssh_options   => {:port => 95},
+        :configuration => {:port => 3000}
+      })
+
       expect(subject.ssh_port(server)).to eq(95)
+    end
+
+    it "uses the value for `:port` if available" do
+      allow(subject).to receive_messages({
+        :ssh_options   => {},
+        :configuration => {:port => 3000}
+      })
+
+      expect(subject.ssh_port(server)).to eq(3000)
     end
 
     it "can be set on a per-server basis" do
       server = double(:port => 123)
 
-      allow(subject).to receive(:ssh_options).with(no_args).and_return({:port => 95})
+      allow(subject).to receive_messages({
+        :configuration => {:port => 3000},
+        :ssh_options   => {:port => 95}
+      })
+
       expect(subject.ssh_port(server)).to eq(123)
+    end
+  end
+
+  describe "#ssh_command_for" do
+    it "does not include the port if it isn't overridden" do
+      allow(subject).to receive(:ssh_port).with('server').and_return(nil)
+
+      expect(subject.ssh_command_for('server')).to eq('ssh')
+    end
+
+    it "includes the port if necessary" do
+      allow(subject).to receive(:ssh_port).with('server').and_return(3000)
+      expect(subject.ssh_command_for('server')).to eq('ssh -p 3000')
     end
   end
 
