@@ -321,7 +321,7 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
         :repository_cache_path => 'repository_cache_path'
       })
 
-      expected = "rsync rsync_options --rsh='ssh -p ssh_port' local_cache_path/ rsync_host:repository_cache_path/"
+      expected = "rsync rsync_options --rsh='ssh -p ssh_port' 'local_cache_path/' rsync_host:repository_cache_path/"
 
       expect(subject.rsync_command_for(server)).to eq(expected)
     end
