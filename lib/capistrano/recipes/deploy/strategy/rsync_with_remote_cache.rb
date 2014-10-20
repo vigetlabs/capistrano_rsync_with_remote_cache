@@ -8,16 +8,16 @@ module Capistrano
 
         class InvalidCacheError < Exception; end
 
+        CONFIG = {
+          :subversion => {:url_command => "svn info . | sed -n \'s/URL: //p\'",                      :exclusions => '.svn*'},
+          :git        => {:url_command => "git config remote.origin.url",                            :exclusions => '.git*'},
+          :mercurial  => {:url_command => "hg showconfig paths.default",                             :exclusions => '.hg*'},
+          :bzr        => {:url_command => "bzr info | grep parent | sed \'s/^.*parent branch: //\'", :exclusions => '.bzr*'}
+        }
+
         def self.default_attribute(attribute, default_value)
           define_method(attribute) { configuration[attribute] || default_value }
         end
-
-        INFO_COMMANDS = {
-          :subversion => "svn info . | sed -n \'s/URL: //p\'",
-          :git        => "git config remote.origin.url",
-          :mercurial  => "hg showconfig paths.default",
-          :bzr        => "bzr info | grep parent | sed \'s/^.*parent branch: //\'"
-        }
 
         default_attribute :rsync_options, '-az --delete-excluded'
         default_attribute :local_cache, '.rsync_cache'
@@ -51,6 +51,10 @@ module Capistrano
           File.open(File.join(local_cache_path, 'REVISION'), 'w') {|f| f << revision }
         end
 
+        def default_exclusions
+          Array(CONFIG[configuration[:scm]].fetch(:exclusions, []))
+        end
+
         def exclusion_options
           copy_exclude.map {|f| "--exclude='#{f}'" }.join(' ')
         end
@@ -73,7 +77,7 @@ module Capistrano
         end
 
         def repository_url
-          `cd #{local_cache_path} && #{INFO_COMMANDS[configuration[:scm]]}`.strip
+          `cd #{local_cache_path} && #{CONFIG[configuration[:scm]][:url_command]}`.strip
         end
 
         def repository_url_changed?
@@ -125,7 +129,7 @@ module Capistrano
         private
 
         def copy_exclude
-          Array(configuration.fetch(:copy_exclude, []))
+          default_exclusions + Array(configuration.fetch(:copy_exclude, []))
         end
 
         def run_rsync(*args)

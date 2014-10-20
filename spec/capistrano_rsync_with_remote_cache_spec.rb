@@ -19,19 +19,43 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
     end
   end
 
+  describe "#default_exclusions" do
+    it "knows the value when using Subversion" do
+      allow(subject).to receive(:configuration).with(no_args).and_return(:scm => :subversion)
+      expect(subject.default_exclusions).to eq(['.svn*'])
+    end
+
+    it "knows the value when using Git" do
+      allow(subject).to receive(:configuration).with(no_args).and_return(:scm => :git)
+      expect(subject.default_exclusions).to eq(['.git*'])
+    end
+
+    it "knows the value when using Mercurial" do
+      allow(subject).to receive(:configuration).with(no_args).and_return(:scm => :mercurial)
+      expect(subject.default_exclusions).to eq(['.hg*'])
+    end
+
+    it "knows the value when using Bazaar" do
+      allow(subject).to receive(:configuration).with(no_args).and_return(:scm => :bzr)
+      expect(subject.default_exclusions).to eq(['.bzr*'])
+    end
+  end
+
   describe "#exclusion_options" do
-    it "is blank by default" do
-      expect(subject.exclusion_options).to eq('')
+    before { allow(subject).to receive(:default_exclusions).with(no_args).and_return(['.git*']) }
+
+    it "includes the SCM-specific list by default" do
+      expect(subject.exclusion_options).to eq("--exclude='.git*'")
     end
 
     it "uses the value specified in the `:copy_exclude` configuration variable" do
-      allow(subject).to receive(:configuration).with(no_args).and_return({:copy_exclude => '.git'})
-      expect(subject.exclusion_options).to eq("--exclude='.git'")
+      allow(subject).to receive(:configuration).with(no_args).and_return({:copy_exclude => '.jenkins'})
+      expect(subject.exclusion_options).to eq("--exclude='.git*' --exclude='.jenkins'")
     end
 
     it "allows multiple exclusions" do
-      allow(subject).to receive(:configuration).with(no_args).and_return({:copy_exclude => ['.git', '.hg']})
-      expect(subject.exclusion_options).to eq("--exclude='.git' --exclude='.hg'")
+      allow(subject).to receive(:configuration).with(no_args).and_return({:copy_exclude => ['.jenkins', 'test']})
+      expect(subject.exclusion_options).to eq("--exclude='.git*' --exclude='.jenkins' --exclude='test'")
     end
   end
 
@@ -331,6 +355,7 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
       allow(subject).to receive(:rsync_host).with(server).and_return('rsync_host')
 
       allow(subject).to receive_messages({
+        :default_exclusions    => [],
         :rsync_options         => 'rsync_options',
         :ssh_port              => 'ssh_port',
         :local_cache_path      => 'local_cache_path',
@@ -370,7 +395,10 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
 
   describe "#copy_remote_cache" do
     before do
-      allow(subject).to receive(:repository_cache_path).with(no_args).and_return('repository_cache_path')
+      allow(subject).to receive_messages({
+        :default_exclusions    => [],
+        :repository_cache_path => 'repository_cache_path'
+      })
     end
 
     it "runs the appropriate rsync command" do
