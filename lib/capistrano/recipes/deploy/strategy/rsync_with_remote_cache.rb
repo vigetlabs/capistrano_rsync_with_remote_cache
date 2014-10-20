@@ -19,7 +19,7 @@ module Capistrano
           :bzr        => "bzr info | grep parent | sed \'s/^.*parent branch: //\'"
         }
 
-        default_attribute :rsync_options, '-az --delete'
+        default_attribute :rsync_options, '-az --delete-excluded'
         default_attribute :local_cache, '.rsync_cache'
         default_attribute :repository_cache, 'cached-copy'
 
@@ -36,19 +36,23 @@ module Capistrano
 
         def update_remote_cache
           finder_options = {:except => { :no_release => true }}
-          find_servers(finder_options).each {|s| system(rsync_command_for(s)) }
+          find_servers(finder_options).each {|s| sync_source_to(s) }
         end
 
         def copy_remote_cache
-          run("rsync -a --delete #{repository_cache_path}/ #{configuration[:release_path]}/")
+          run_rsync('-a', '--delete', "#{repository_cache_path}/", "#{configuration[:release_path]}/")
         end
 
-        def rsync_command_for(server)
-          "rsync #{rsync_options} --rsh='#{ssh_command_for(server)}' '#{local_cache_path}/' #{rsync_host(server)}:#{repository_cache_path}/"
+        def sync_source_to(server)
+          run_rsync(rsync_options, exclusion_options, "--rsh='#{ssh_command_for(server)}'", "'#{local_cache_path}/'", "#{rsync_host(server)}:#{repository_cache_path}/", :local => true)
         end
 
         def mark_local_cache
           File.open(File.join(local_cache_path, 'REVISION'), 'w') {|f| f << revision }
+        end
+
+        def exclusion_options
+          copy_exclude.map {|f| "--exclude='#{f}'" }.join(' ')
         end
 
         def ssh_port(server)
@@ -117,8 +121,23 @@ module Capistrano
             raise InvalidCacheError, "The local cache exists but is not valid (#{local_cache_path})"
           end
         end
-      end
 
+        private
+
+        def copy_exclude
+          Array(configuration.fetch(:copy_exclude, []))
+        end
+
+        def run_rsync(*args)
+          options = args.last.is_a?(Hash) ? args.pop : {}
+
+          command_options = args.select {|a| a.strip.length > 0 }.join(' ')
+          command         = "rsync #{command_options}"
+
+          options.fetch(:local, false) ? system(command) : run(command)
+        end
+
+      end
     end
   end
 end

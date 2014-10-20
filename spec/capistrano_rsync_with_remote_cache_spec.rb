@@ -10,12 +10,28 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
 
   describe "#rsync_options" do
     it "has a default value" do
-      expect(subject.rsync_options).to eq('-az --delete')
+      expect(subject.rsync_options).to eq('-az --delete-excluded')
     end
 
     it "allows a user-specified value" do
       expect(subject).to receive(:configuration).with(no_args).and_return(:rsync_options => 'new_opts')
       expect(subject.rsync_options).to eq('new_opts')
+    end
+  end
+
+  describe "#exclusion_options" do
+    it "is blank by default" do
+      expect(subject.exclusion_options).to eq('')
+    end
+
+    it "uses the value specified in the `:copy_exclude` configuration variable" do
+      allow(subject).to receive(:configuration).with(no_args).and_return({:copy_exclude => '.git'})
+      expect(subject.exclusion_options).to eq("--exclude='.git'")
+    end
+
+    it "allows multiple exclusions" do
+      allow(subject).to receive(:configuration).with(no_args).and_return({:copy_exclude => ['.git', '.hg']})
+      expect(subject.exclusion_options).to eq("--exclude='.git' --exclude='.hg'")
     end
   end
 
@@ -308,10 +324,10 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
     end
   end
 
-  describe "#rsync_command_for" do
-    it "returns the correct rsync command based on the options" do
-      server = double(:server)
+  describe "#sync_source_to" do
+    let(:server) { double(:server) }
 
+    before do
       allow(subject).to receive(:rsync_host).with(server).and_return('rsync_host')
 
       allow(subject).to receive_messages({
@@ -320,10 +336,22 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
         :local_cache_path      => 'local_cache_path',
         :repository_cache_path => 'repository_cache_path'
       })
+    end
 
-      expected = "rsync rsync_options --rsh='ssh -p ssh_port' 'local_cache_path/' rsync_host:repository_cache_path/"
+    it "runs the rsync command based on the options" do
+      expected_command = "rsync rsync_options --rsh='ssh -p ssh_port' 'local_cache_path/' rsync_host:repository_cache_path/"
+      expect(subject).to receive(:system).with(expected_command)
 
-      expect(subject.rsync_command_for(server)).to eq(expected)
+      subject.sync_source_to(server)
+    end
+
+    it "excludes any configured files" do
+      allow(subject).to receive(:configuration).with(no_args).and_return({:copy_exclude => '.git'})
+
+      expected_command = "rsync rsync_options --exclude='.git' --rsh='ssh -p ssh_port' 'local_cache_path/' rsync_host:repository_cache_path/"
+      expect(subject).to receive(:system).with(expected_command)
+
+      subject.sync_source_to(server)
     end
   end
 
@@ -333,26 +361,32 @@ RSpec.describe Capistrano::Deploy::Strategy::RsyncWithRemoteCache do
 
       allow(subject).to receive(:find_servers).with(:except => {:no_release => true}).and_return([server_1, server_2])
 
-      allow(subject).to receive(:rsync_command_for).with(server_1).and_return('server_1_rsync_command')
-      allow(subject).to receive(:rsync_command_for).with(server_2).and_return('server_2_rsync_command')
-
-      expect(subject).to receive(:system).with('server_1_rsync_command')
-      expect(subject).to receive(:system).with('server_2_rsync_command')
+      expect(subject).to receive(:sync_source_to).with(server_1).and_return('server_1_rsync_command')
+      expect(subject).to receive(:sync_source_to).with(server_2).and_return('server_2_rsync_command')
 
       subject.update_remote_cache
     end
   end
 
   describe "#copy_remote_cache" do
+    before do
+      allow(subject).to receive(:repository_cache_path).with(no_args).and_return('repository_cache_path')
+    end
+
     it "runs the appropriate rsync command" do
-      allow(subject).to receive_messages({
-        :repository_cache_path => 'repository_cache_path',
-        :configuration         => {:release_path => 'release_path'}
+      allow(subject).to receive(:configuration).with(no_args).and_return(:release_path => 'release_path')
+
+      expect(subject).to receive(:run).with("rsync -a --delete repository_cache_path/ release_path/")
+      subject.copy_remote_cache
+    end
+
+    it "excludes any configured files" do
+      allow(subject).to receive(:configuration).with(no_args).and_return({
+        :release_path => 'release_path',
+        :copy_exclude => '.git'
       })
 
-      command = "rsync -a --delete repository_cache_path/ release_path/"
-      expect(subject).to receive(:run).with(command)
-
+      expect(subject).to receive(:run).with("rsync -a --delete repository_cache_path/ release_path/")
       subject.copy_remote_cache
     end
   end
