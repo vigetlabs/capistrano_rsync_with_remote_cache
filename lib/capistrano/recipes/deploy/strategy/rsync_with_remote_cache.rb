@@ -30,7 +30,10 @@ module Capistrano
         end
 
         def update_local_cache
-          system(command)
+          unless system(command)
+            system("rm -rf #{local_cache_path}")
+            system(command)
+          end
           mark_local_cache
         end
 
