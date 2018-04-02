@@ -25,8 +25,38 @@ module Capistrano
 
         def deploy!
           update_local_cache
+          build
           update_remote_cache
           copy_remote_cache
+        end
+
+        def execute description, &block
+          logger.debug description
+          handle_system_errors &block
+        end
+
+        def handle_system_errors &block
+          block.call
+          raise_command_failed if last_command_failed?
+        end
+
+        def raise_command_failed
+          raise Capistrano::Error, "shell command failed with return code #{$?}"
+        end
+
+        def last_command_failed?
+          $? != 0
+        end
+
+        def build_script
+          configuration[:build_script]
+        end
+
+        def build
+          return unless build_script
+          execute "running build script on #{local_cache_path}" do
+            Dir.chdir(local_cache_path) { system(build_script) }
+          end
         end
 
         def update_local_cache
